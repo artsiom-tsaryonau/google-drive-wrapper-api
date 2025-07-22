@@ -37,4 +37,4 @@ async def callback(request: Request):
         'scopes': credentials.scopes
     }
     
-    return RedirectResponse(url='/drive/files')
+    return RedirectResponse(url='/drive/search')
