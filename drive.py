@@ -51,7 +51,6 @@ class DriveHelper:
     def get_folder_id_by_path(self, folder_path):
         path_parts = folder_path.split('/')
         folder_id = 'root'
-
         for part in path_parts:
             query = f"name='{part}' and mimeType='application/vnd.google-apps.folder' and '{folder_id}' in parents"
             results = self.drive_service.files().list(q=query, fields="files(id)").execute()
@@ -71,6 +70,28 @@ class DriveHelper:
             fields="files(id, name, mimeType)"
         ).execute()
         return results.get('files', [])
+
+    '''def _get_file_type(self, mime_type):
+        if mime_type == 'application/vnd.google-apps.folder':
+            return 'folder'
+        if mime_type == 'application/vnd.google-apps.document':
+            return 'google document'
+        if mime_type == 'application/vnd.google-apps.spreadsheet':
+            return 'spreadsheet'
+        if mime_type == 'application/vnd.google-apps.presentation':
+            return 'google presentation'
+        if mime_type == 'application/vnd.google-apps.form':
+            return 'google form'
+        if mime_type == 'application/vnd.google-apps.drawing':
+            return 'google drawing'
+        if mime_type and mime_type.startswith('image/'):
+            return 'image'
+        if mime_type and mime_type.startswith('video/'):
+            return 'video'
+        if mime_type == 'application/pdf':
+            return 'pdf'
+        return 'file'
+    '''
 
     def search(self, name):
         if name:
@@ -93,8 +114,8 @@ class DriveHelper:
             output.append({
                 "id": item['id'],
                 "name": item['name'],
-                "type": "folder" if item['mimeType'] == 'application/vnd.google-apps.folder' else "file",
-                "path": f"{path}/{item['name']}" if path else item['name']
+                "mimeType": item.get('mimeType'),
+                "path": f"{path}/{item['name']}" if path else item['name'] # additional line
             })
             
         return output
@@ -105,11 +126,20 @@ def get_drive_helper(drive_service=Depends(get_drive_service)):
 @router.get("/drive/list/{path:path}")
 async def list_drive_path(path: str, helper: DriveHelper = Depends(get_drive_helper)):
     try:
-        folder_id = helper.get_folder_id_by_path(path)
-        if folder_id is None:
-            raise HTTPException(status_code=404, detail="Path not found")
+        sanitized_path = path.strip('/')
         
-        items = helper.list_files_in_folder(folder_id)
+        # Extract the folder name from the path
+        folder_name = sanitized_path.split('/')[-1]
+        search_results = helper.search(folder_name)
+        
+        # Find the specific folder that matches the full path
+        target_folder = next((item for item in search_results if item['path'] == sanitized_path and item['mimeType'] == 'application/vnd.google-apps.folder'), None)
+        
+        if not target_folder:
+            raise HTTPException(status_code=404, detail="Folder not found at the specified path")
+            
+        # List the contents of the found folder
+        items = helper.list_files_in_folder(target_folder['id'])
         return {"files": items}
     except HttpError as error:
         raise HTTPException(status_code=500, detail=f"An error occurred: {error}")
