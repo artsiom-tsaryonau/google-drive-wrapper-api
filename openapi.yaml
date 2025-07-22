@@ -1,0 +1,232 @@
+openapi: 3.0.3
+info:
+  title: Google Drive API
+  description: A simple API to interact with Google Drive, allowing users to list folder contents and search for files.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+paths:
+  /drive/list/{path}:
+    get:
+      summary: List Files in a Folder
+      description: Retrieves the contents of a specific folder in Google Drive by its full path.
+      operationId: list_drive_path_drive_list__path__get
+      parameters:
+        - name: path
+          in: path
+          required: true
+          description: The full path of the folder to list the contents of.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FileItem'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /drive/search:
+    get:
+      summary: Search Files and Folders
+      description: Searches for files and folders by name in Google Drive. If no name is provided, it lists items in the root directory.
+      operationId: search_drive_drive_search_get
+      parameters:
+        - name: name
+          in: query
+          required: false
+          description: The name of the file or folder to search for.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResultItem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /drive/document/{file_id}:
+    get:
+      summary: Get Google Document
+      description: Retrieves a Google Document by its file ID.
+      operationId: get_google_document_drive_document__file_id__get
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          description: The ID of the Google Document.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleDocument'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /drive/spreadsheet/{file_id}:
+    get:
+      summary: Get Google Spreadsheet
+      description: Retrieves a Google Spreadsheet by its file ID.
+      operationId: get_google_spreadsheet_drive_spreadsheet__file_id__get
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          description: The ID of the Google Spreadsheet.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleSpreadsheet'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /drive/slides/{file_id}:
+    get:
+      summary: Get Google Slides
+      description: Retrieves a Google Slides presentation by its file ID.
+      operationId: get_google_slides_drive_slides__file_id__get
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          description: The ID of the Google Slides presentation.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleSlides'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    FileItem:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the file or folder.
+          example: "1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+        name:
+          type: string
+          description: The name of the file or folder.
+          example: "MyDocument.gdoc"
+        mimeType:
+          type: string
+          description: The MIME type of the item.
+          example: "application/vnd.google-apps.document"
+    SearchResultItem:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the file or folder.
+          example: "1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+        name:
+          type: string
+          description: The name of the file or folder.
+          example: "MyFile.txt"
+        mimeType:
+          type: string
+          description: The MIME type of the item.
+          example: "text/plain"
+        path:
+          type: string
+          description: The full path of the item within Google Drive.
+          example: "MyFolder/MyFile.txt"
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: A detailed error message.
+          example: "An error occurred: [details]"
+    GoogleDocument:
+        type: object
+        description: The JSON representation of a Google Document.
+    GoogleSpreadsheet:
+        type: object
+        description: The JSON representation of a Google Spreadsheet.
+    GoogleSlides:
+        type: object
+        description: The JSON representation of a Google Slides presentation.

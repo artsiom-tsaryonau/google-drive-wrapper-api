@@ -31,6 +31,15 @@ def get_credentials(request: Request) -> Credentials:
 def get_drive_service(credentials: Credentials = Depends(get_credentials)):
     return build('drive', 'v3', credentials=credentials)
 
+def get_docs_service(credentials: Credentials = Depends(get_credentials)):
+    return build('docs', 'v1', credentials=credentials)
+
+def get_sheets_service(credentials: Credentials = Depends(get_credentials)):
+    return build('sheets', 'v4', credentials=credentials)
+
+def get_slides_service(credentials: Credentials = Depends(get_credentials)):
+    return build('slides', 'v1', credentials=credentials)
+
 class DriveHelper:
     def __init__(self, drive_service):
         self.drive_service = drive_service
@@ -156,3 +165,48 @@ async def search_drive(name: str = Query(None), helper: DriveHelper = Depends(ge
         return {"results": items}
     except HttpError as error:
         raise HTTPException(status_code=500, detail=f"An error occurred: {error}")
+
+@router.get("/drive/document/{file_id}")
+async def get_google_document(file_id: str, drive_service=Depends(get_drive_service), docs_service=Depends(get_docs_service)):
+    try:
+        file_metadata = drive_service.files().get(fileId=file_id, fields='mimeType').execute()
+        if file_metadata.get('mimeType') != 'application/vnd.google-apps.document':
+            raise HTTPException(status_code=400, detail="File is not a Google Document.")
+
+        document = docs_service.documents().get(documentId=file_id).execute()
+        return document
+    except HttpError as error:
+        raise HTTPException(status_code=error.resp.status, detail=f"An error occurred: {error}")
+
+@router.get("/drive/spreadsheet/{file_id}")
+async def get_google_spreadsheet(file_id: str, drive_service=Depends(get_drive_service), sheets_service=Depends(get_sheets_service)):
+    try:
+        file_metadata = drive_service.files().get(fileId=file_id, fields='mimeType').execute()
+        if file_metadata.get('mimeType') != 'application/vnd.google-apps.spreadsheet':
+            raise HTTPException(status_code=400, detail="File is not a Google Spreadsheet.")
+
+        spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=file_id).execute()
+        if not spreadsheet.get('sheets'):
+            return {"values": []}
+
+        sheet_title = spreadsheet['sheets'][0]['properties']['title']
+        range_name = f"'{sheet_title}'"
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=file_id,
+            range=range_name
+        ).execute()
+        return result
+    except HttpError as error:
+        raise HTTPException(status_code=error.resp.status, detail=f"An error occurred: {error}")
+
+@router.get("/drive/slides/{file_id}")
+async def get_google_slides(file_id: str, drive_service=Depends(get_drive_service), slides_service=Depends(get_slides_service)):
+    try:
+        file_metadata = drive_service.files().get(fileId=file_id, fields='mimeType').execute()
+        if file_metadata.get('mimeType') != 'application/vnd.google-apps.presentation':
+            raise HTTPException(status_code=400, detail="File is not a Google Slides presentation.")
+
+        presentation = slides_service.presentations().get(presentationId=file_id).execute()
+        return presentation
+    except HttpError as error:
+        raise HTTPException(status_code=error.resp.status, detail=f"An error occurred: {error}")
