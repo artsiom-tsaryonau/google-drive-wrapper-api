@@ -4,6 +4,9 @@ from config import settings
 from auth import router as auth_router
 from drive import router as drive_router
 import uvicorn
+import os
+
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = FastAPI()
 
