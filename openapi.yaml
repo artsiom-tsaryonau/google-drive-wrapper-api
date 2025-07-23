@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: Google Drive API
-  description: A simple API to interact with Google Drive, allowing users to list folder contents and search for files.
-  version: 1.0.0
+  description: An API to interact with Google Drive, allowing users to manage files, folders, and presentations.
+  version: 1.1.0
 servers:
   - url: http://localhost:8000
     description: Local development server
@@ -32,27 +32,15 @@ paths:
                     items:
                       $ref: '#/components/schemas/FileItem'
         '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/UnauthorizedError'
         '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/NotFoundError'
         '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalServerError'
   /drive/search:
     get:
       summary: Search Files and Folders
-      description: Searches for files and folders by name in Google Drive. If no name is provided, it lists items in the root directory.
+      description: Searches for files and folders by name in Google Drive.
       operationId: search_drive_drive_search_get
       parameters:
         - name: name
@@ -74,17 +62,9 @@ paths:
                     items:
                       $ref: '#/components/schemas/SearchResultItem'
         '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/NotFoundError'
         '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/InternalServerError'
   /drive/document/{file_id}:
     get:
       summary: Get Google Document
@@ -94,7 +74,6 @@ paths:
         - name: file_id
           in: path
           required: true
-          description: The ID of the Google Document.
           schema:
             type: string
       responses:
@@ -105,17 +84,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/GoogleDocument'
         '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequestError'
         '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/NotFoundError'
   /drive/spreadsheet/{file_id}:
     get:
       summary: Get Google Spreadsheet
@@ -125,7 +96,6 @@ paths:
         - name: file_id
           in: path
           required: true
-          description: The ID of the Google Spreadsheet.
           schema:
             type: string
       responses:
@@ -136,27 +106,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/GoogleSpreadsheet'
         '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequestError'
         '404':
-          description: Not Found
+          $ref: '#/components/responses/NotFoundError'
+  /drive/presentations:
+    post:
+      summary: Create Google Presentation
+      description: Creates a new, empty Google Slides presentation.
+      operationId: create_google_presentation_drive_presentations_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresentationCreate'
+      responses:
+        '201':
+          description: Presentation Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  /drive/slides/{file_id}:
+                $ref: '#/components/schemas/PresentationInfo'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /drive/presentations/{presentation_id}:
     get:
-      summary: Get Google Slides
-      description: Retrieves a Google Slides presentation by its file ID.
-      operationId: get_google_slides_drive_slides__file_id__get
+      summary: Get Google Presentation
+      description: Retrieves a Google Slides presentation by its ID.
+      operationId: get_google_presentation_drive_presentations__presentation_id__get
       parameters:
-        - name: file_id
+        - name: presentation_id
           in: path
           required: true
-          description: The ID of the Google Slides presentation.
           schema:
             type: string
       responses:
@@ -167,17 +148,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/GoogleSlides'
         '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequestError'
         '404':
-          description: Not Found
+          $ref: '#/components/responses/NotFoundError'
+  /drive/presentations/{presentation_id}/slides:
+    post:
+      summary: Add Slide to Presentation
+      description: Adds a new slide with a specified layout and content to an existing presentation.
+      operationId: add_slide_to_presentation_drive_presentations__presentation_id__slides_post
+      parameters:
+        - name: presentation_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlideContent'
+      responses:
+        '201':
+          description: Slide Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/SlideCreationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
     FileItem:
@@ -185,48 +188,99 @@ components:
       properties:
         id:
           type: string
-          description: The unique identifier for the file or folder.
-          example: "1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
         name:
           type: string
-          description: The name of the file or folder.
-          example: "MyDocument.gdoc"
         mimeType:
           type: string
-          description: The MIME type of the item.
-          example: "application/vnd.google-apps.document"
     SearchResultItem:
       type: object
       properties:
         id:
           type: string
-          description: The unique identifier for the file or folder.
-          example: "1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
         name:
           type: string
-          description: The name of the file or folder.
-          example: "MyFile.txt"
         mimeType:
           type: string
-          description: The MIME type of the item.
-          example: "text/plain"
         path:
           type: string
-          description: The full path of the item within Google Drive.
-          example: "MyFolder/MyFile.txt"
     Error:
       type: object
       properties:
         detail:
           type: string
-          description: A detailed error message.
-          example: "An error occurred: [details]"
     GoogleDocument:
-        type: object
-        description: The JSON representation of a Google Document.
+      type: object
+      description: The JSON representation of a Google Document.
     GoogleSpreadsheet:
-        type: object
-        description: The JSON representation of a Google Spreadsheet.
+      type: object
+      description: The JSON representation of a Google Spreadsheet.
     GoogleSlides:
-        type: object
-        description: The JSON representation of a Google Slides presentation.
+      type: object
+      description: The JSON representation of a Google Slides presentation.
+    PresentationCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: The title for the new presentation.
+          example: "My New Presentation"
+    PresentationInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the newly created presentation.
+        name:
+          type: string
+          description: The name of the newly created presentation.
+    SlideContent:
+      type: object
+      required:
+        - layout
+      properties:
+        layout:
+          type: string
+          description: The layout for the new slide.
+          example: "TITLE_AND_BODY"
+        title:
+          type: string
+          description: The title text for the slide.
+        subtitle:
+          type: string
+          description: The subtitle text for the slide.
+        body:
+          type: string
+          description: The body text for the slide.
+    SlideCreationResponse:
+      type: object
+      properties:
+        slideId:
+          type: string
+          description: The ID of the newly created slide.
+  responses:
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Query
+from pydantic import BaseModel
 from googleapiclient.errors import HttpError
 from functools import lru_cache
 
