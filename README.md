@@ -144,7 +144,10 @@ All endpoints are organized under the `/drive/documents` resource path and requi
 | `bold`            | boolean| Whether the text is bold.                      |
 | `italic`          | boolean| Whether the text is italic.                    |
 | `underline`       | boolean| Whether the text is underlined.                |
-| `foregroundColor` | object | The color of the text (see `Color` object). |
+| `strikethrough`   | boolean| Whether the text has a strikethrough.          |
+| `foregroundColor` | object | The color of the text (see `Color` object).    |
+| `font_size`       | object | The font size (see `Dimension` object).        |
+| `weighted_font_family` | object | The font family and weight (see `WeightedFontFamily` object). |
 
 ### `Color`
 
@@ -152,4 +155,86 @@ All endpoints are organized under the `/drive/documents` resource path and requi
 | ------- | ------ | ----------------------------------- |
 | `red`   | float  | The red component (0.0 to 1.0).   |
 | `green` | float  | The green component (0.0 to 1.0). |
-| `blue`  | float  | The blue component (0.0 to 1.0).  | 
+| `blue`  | float  | The blue component (0.0 to 1.0).  |
+
+### `Dimension`
+
+| Key         | Type   | Description                             |
+| ----------- | ------ | --------------------------------------- |
+| `magnitude` | float  | The numerical value of the dimension.   |
+| `unit`      | string | The unit of measurement (default: `PT`). |
+
+### `WeightedFontFamily`
+
+| Key           | Type   | Description                                     |
+| ------------- | ------ | ----------------------------------------------- |
+| `font_family` | string | The name of the font family (e.g., `Arial`).    |
+| `weight`      | integer| The font weight (100-900, default: `400`).      |
+
+---
+
+## Advanced Text Styling Example
+
+Here's an example that demonstrates how to use the new advanced text styling features:
+
+```bash
+curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:appendContent" \
+-H "Content-Type: application/json" \
+-H "Cookie: session=<SESSION_COOKIE_VALUE>" \
+-d '{
+  "content": [
+    {
+      "text": "This text is 24pt, Arial, and bold.",
+      "text_style": {
+        "font_size": { "magnitude": 24, "unit": "PT" },
+        "weighted_font_family": { "font_family": "Arial", "weight": 700 },
+        "bold": true
+      }
+    },
+    {
+      "text": "This text has a strikethrough.",
+      "text_style": {
+        "strikethrough": true
+      }
+    }
+  ]
+}'
+```
+
+---
+
+## Supported `namedStyleType` Values
+
+The following are the supported values for the `namedStyleType` property:
+
+- `NORMAL_TEXT`
+- `TITLE`
+- `SUBTITLE`
+- `HEADING_1`
+- `HEADING_2`
+- `HEADING_3`
+- `HEADING_4`
+- `HEADING_5`
+- `HEADING_6`
+
+---
+
+## Supported `bulletPreset` Values
+
+The following are the supported values for the `bulletPreset` property:
+
+- `BULLET_DISC_CIRCLE_SQUARE`
+- `BULLET_DIAMONDX_ARROW3D_SQUARE`
+- `BULLET_CHECKBOX`
+- `BULLET_ARROW_DIAMOND_DISC`
+- `BULLET_STAR_CIRCLE_SQUARE`
+- `BULLET_ARROW3D_CIRCLE_SQUARE`
+- `BULLET_LEFTTRIANGLE_DIAMOND_DISC`
+- `BULLET_DIAMONDX_HOLLOWDIAMOND_SQUARE`
+- `BULLET_DIAMOND_CIRCLE_SQUARE`
+- `NUMBERED_DECIMAL_ALPHA_ROMAN`
+- `NUMBERED_DECIMAL_ALPHA_ROMAN_PARENS`
+- `NUMBERED_DECIMAL_NESTED`
+- `NUMBERED_UPPERALPHA_ALPHA_ROMAN`
+- `NUMBERED_UPPERROMAN_UPPERALPHA_DECIMAL`
+- `NUMBERED_ZERODECIMAL_ALPHA_ROMAN` 

@@ -29,11 +29,22 @@ class Color(BaseModel):
     green: float = Field(..., ge=0, le=1)
     blue: float = Field(..., ge=0, le=1)
 
+class Dimension(BaseModel):
+    magnitude: float
+    unit: str = "PT"
+
+class WeightedFontFamily(BaseModel):
+    font_family: str
+    weight: int = Field(400, ge=100, le=900)
+
 class TextStyle(BaseModel):
     bold: Optional[bool] = None
     italic: Optional[bool] = None
     underline: Optional[bool] = None
+    strikethrough: Optional[bool] = None
     foregroundColor: Optional[Color] = None
+    font_size: Optional[Dimension] = None
+    weighted_font_family: Optional[WeightedFontFamily] = None
 
 class ParagraphStyle(BaseModel):
     namedStyleType: Optional[str] = Field(None, description="e.g., 'HEADING_1', 'TITLE'")
@@ -128,12 +139,24 @@ class DocumentService:
                 if para.text_style.underline is not None:
                     style_request['updateTextStyle']['textStyle']['underline'] = para.text_style.underline
                     ts_fields.append('underline')
+                if para.text_style.strikethrough is not None:
+                    style_request['updateTextStyle']['textStyle']['strikethrough'] = para.text_style.strikethrough
+                    ts_fields.append('strikethrough')
                 if para.text_style.foregroundColor:
                     style_request['updateTextStyle']['textStyle']['foregroundColor'] = {
                         'color': {'rgbColor': para.text_style.foregroundColor.dict()}
                     }
                     ts_fields.append('foregroundColor')
-                
+                if para.text_style.font_size:
+                    style_request['updateTextStyle']['textStyle']['fontSize'] = para.text_style.font_size.dict()
+                    ts_fields.append('fontSize')
+                if para.text_style.weighted_font_family:
+                    style_request['updateTextStyle']['textStyle']['weightedFontFamily'] = {
+                        'fontFamily': para.text_style.weighted_font_family.font_family,
+                        'weight': para.text_style.weighted_font_family.weight
+                    }
+                    ts_fields.append('weightedFontFamily')
+
                 if ts_fields:
                     style_request['updateTextStyle']['fields'] = ','.join(ts_fields)
                     requests.append(style_request)

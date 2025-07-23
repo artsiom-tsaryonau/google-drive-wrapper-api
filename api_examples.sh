@@ -97,6 +97,31 @@ curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:appendContent"
 }'
 echo -e "\n"
 
+# 4. Append content with advanced styling to a document
+echo "Appending content with advanced styling to a document (replace <DOCUMENT_ID>)..."
+curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:appendContent" \
+-H "Content-Type: application/json" \
+-H "Cookie: session=<SESSION_COOKIE_VALUE>" \
+-d '{
+  "content": [
+    {
+      "text": "This text is 24pt, Arial, and bold.",
+      "text_style": {
+        "font_size": { "magnitude": 24, "unit": "PT" },
+        "weighted_font_family": { "font_family": "Arial", "weight": 700 },
+        "bold": true
+      }
+    },
+    {
+      "text": "This text has a strikethrough.",
+      "text_style": {
+        "strikethrough": true
+      }
+    }
+  ]
+}'
+echo -e "\n"
+
 
 echo "--- Spreadsheets API ---"
 

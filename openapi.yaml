@@ -420,8 +420,14 @@ components:
           type: boolean
         underline:
           type: boolean
+        strikethrough:
+          type: boolean
         foregroundColor:
           $ref: '#/components/schemas/Color'
+        font_size:
+          $ref: '#/components/schemas/Dimension'
+        weighted_font_family:
+          $ref: '#/components/schemas/WeightedFontFamily'
     Color:
       type: object
       properties:
@@ -434,6 +440,23 @@ components:
         blue:
           type: number
           format: float
+    Dimension:
+      type: object
+      properties:
+        magnitude:
+          type: number
+          format: float
+        unit:
+          type: string
+          default: "PT"
+    WeightedFontFamily:
+      type: object
+      properties:
+        font_family:
+          type: string
+        weight:
+          type: integer
+          default: 400
     GoogleDocument:
       type: object
       description: The JSON representation of a Google Document.
