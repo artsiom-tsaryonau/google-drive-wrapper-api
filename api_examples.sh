@@ -71,13 +71,29 @@ curl -X GET "http://localhost:8000/drive/documents/<DOCUMENT_ID>" \
 -H "Cookie: session=<SESSION_COOKIE_VALUE>"
 echo -e "\n"
 
-# 3. Append text to a document
-echo "Appending text to a document (replace <DOCUMENT_ID>)..."
-curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:append" \
+# 3. Append styled content to a document
+echo "Appending styled content to a document (replace <DOCUMENT_ID>)..."
+curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:appendContent" \
 -H "Content-Type: application/json" \
 -H "Cookie: session=<SESSION_COOKIE_VALUE>" \
 -d '{
-  "text": "\nThis is some appended text."
+  "content": [
+    {
+      "text": "This is a Heading",
+      "paragraph_style": { "namedStyleType": "HEADING_1" }
+    },
+    {
+      "text": "This is a bold and red paragraph.",
+      "text_style": {
+        "bold": true,
+        "foregroundColor": { "red": 1.0, "green": 0.0, "blue": 0.0 }
+      }
+    },
+    {
+      "text": "This is a bulleted list item.",
+      "paragraph_style": { "bulletPreset": "BULLET_DISC_CIRCLE_SQUARE" }
+    }
+  ]
 }'
 echo -e "\n"
 

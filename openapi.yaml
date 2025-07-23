@@ -107,11 +107,11 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '404':
           $ref: '#/components/responses/NotFoundError'
-  /drive/documents/{document_id}:append:
+  /drive/documents/{document_id}:appendContent:
     post:
-      summary: Append to Document
-      description: Appends text to an existing Google Document.
-      operationId: append_to_document_drive_documents__document_id___append_post
+      summary: Append Styled Content to Document
+      description: Appends a list of paragraphs with specified text and styles to an existing Google Document.
+      operationId: append_content_drive_documents__document_id___appendContent_post
       parameters:
         - name: document_id
           in: path
@@ -123,7 +123,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AppendTextPayload'
+              $ref: '#/components/schemas/AppendContentPayload'
       responses:
         '200':
           description: Successful Response
@@ -384,14 +384,56 @@ components:
           type: string
         name:
           type: string
-    AppendTextPayload:
+    AppendContentPayload:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParagraphPayload'
+    ParagraphPayload:
       type: object
       required:
         - text
       properties:
         text:
           type: string
-          description: The text to append to the document.
+        paragraph_style:
+          $ref: '#/components/schemas/ParagraphStyle'
+        text_style:
+          $ref: '#/components/schemas/TextStyle'
+    ParagraphStyle:
+      type: object
+      properties:
+        namedStyleType:
+          type: string
+          description: "e.g., 'HEADING_1', 'TITLE'"
+        bulletPreset:
+          type: string
+          description: "e.g., 'BULLET_DISC_CIRCLE_SQUARE'"
+    TextStyle:
+      type: object
+      properties:
+        bold:
+          type: boolean
+        italic:
+          type: boolean
+        underline:
+          type: boolean
+        foregroundColor:
+          $ref: '#/components/schemas/Color'
+    Color:
+      type: object
+      properties:
+        red:
+          type: number
+          format: float
+        green:
+          type: number
+          format: float
+        blue:
+          type: number
+          format: float
     GoogleDocument:
       type: object
       description: The JSON representation of a Google Document.
