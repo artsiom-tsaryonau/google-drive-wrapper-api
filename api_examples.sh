@@ -122,6 +122,22 @@ curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:appendContent"
 }'
 echo -e "\n"
 
+# 5. Insert a table into a document
+echo "Inserting a table into a document (replace <DOCUMENT_ID>)..."
+curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:insertTable" \
+-H "Content-Type: application/json" \
+-H "Cookie: session=<SESSION_COOKIE_VALUE>" \
+-d '{
+  "rows": 3,
+  "columns": 3,
+  "data": [
+    ["Header 1", "Header 2", "Header 3"],
+    ["Data 1", "Data 2", "Data 3"],
+    ["Data 4", "Data 5", "Data 6"]
+  ]
+}'
+echo -e "\n"
+
 
 echo "--- Spreadsheets API ---"
 

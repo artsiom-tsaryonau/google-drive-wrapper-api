@@ -58,6 +58,11 @@ class ParagraphPayload(BaseModel):
 class AppendContentPayload(BaseModel):
     content: List[ParagraphPayload]
 
+class TablePayload(BaseModel):
+    rows: int = Field(..., gt=0)
+    columns: int = Field(..., gt=0)
+    data: List[List[str]]
+
 
 # --- Service Class for Business Logic ---
 
@@ -101,6 +106,51 @@ class DocumentService:
             if e.resp.status == 404:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, f"Document '{document_id}' not found.")
             raise HTTPException(e.resp.status, f"Error appending content: {e}")
+
+    def insert_table(self, document_id: str, payload: TablePayload) -> Dict[str, str]:
+        try:
+            self._verify_is_document(document_id)
+            doc = self.docs_service.documents().get(documentId=document_id, fields='body(content)').execute()
+            start_index = doc.get('body', {}).get('content', [])[-1].get('endIndex', 1) - 1
+
+            requests = self._build_table_requests(payload, start_index)
+            
+            if requests:
+                self.docs_service.documents().batchUpdate(documentId=document_id, body={'requests': requests}).execute()
+            
+            return {"status": "success", "message": f"Inserted table into document {document_id}"}
+        except HttpError as e:
+            if e.resp.status == 404:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, f"Document '{document_id}' not found.")
+            raise HTTPException(e.resp.status, f"Error inserting table: {e}")
+
+    def _build_table_requests(self, payload: TablePayload, start_index: int) -> List[Dict[str, Any]]:
+        requests = [
+            {'insertTable': {
+                'location': {'index': start_index},
+                'rows': payload.rows,
+                'columns': payload.columns
+            }}
+        ]
+        
+        # Table content insertion starts at `start_index + 2` because of the table start element and newline
+        cell_start_index = start_index + 4
+        for r, row_data in enumerate(payload.data):
+            for c, cell_text in enumerate(row_data):
+                if cell_text:
+                    requests.append({
+                        'insertText': {
+                            'location': {'index': cell_start_index},
+                            'text': cell_text
+                        }
+                    })
+                # Move to the next cell. Each cell takes up 2 indices (start and end).
+                cell_start_index += 2
+            # Each row also has an end element
+            cell_start_index += 2
+
+
+        return requests
 
     def _build_append_requests(self, payload: AppendContentPayload, start_index: int) -> List[Dict[str, Any]]:
         requests = []
@@ -201,4 +251,9 @@ def get_document(document_id: str, service: DocumentService = Depends(DocumentSe
 @router.post("/{document_id}:appendContent", status_code=status.HTTP_200_OK)
 def append_content(document_id: str, payload: AppendContentPayload, service: DocumentService = Depends(DocumentService)):
     """Append styled content to an existing Google Document."""
-    return service.append_content(document_id, payload) 
+    return service.append_content(document_id, payload)
+
+@router.post("/{document_id}:insertTable", status_code=status.HTTP_200_OK)
+def insert_table(document_id: str, payload: TablePayload, service: DocumentService = Depends(DocumentService)):
+    """Insert a table into an existing Google Document."""
+    return service.insert_table(document_id, payload) 

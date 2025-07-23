@@ -138,6 +138,37 @@ paths:
                     type: string
         '404':
           $ref: '#/components/responses/NotFoundError'
+  /drive/documents/{document_id}:insertTable:
+    post:
+      summary: Insert Table into Document
+      description: Inserts a table with specified dimensions and data into an existing Google Document.
+      operationId: insert_table_drive_documents__document_id___insertTable_post
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TablePayload'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /drive/spreadsheets:
     post:
       summary: Create Google Spreadsheet
@@ -413,6 +444,23 @@ components:
           type: string
         name:
           type: string
+    TablePayload:
+      type: object
+      required:
+        - rows
+        - columns
+        - data
+      properties:
+        rows:
+          type: integer
+        columns:
+          type: integer
+        data:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
     AppendContentPayload:
       type: object
       properties:

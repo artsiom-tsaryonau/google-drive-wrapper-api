@@ -126,6 +126,45 @@ All endpoints are organized under the `/drive/documents` resource path and requi
   }
   ```
 
+### 4. Insert a Table
+
+- **`POST /drive/documents/{document_id}:insertTable`**
+
+  Inserts a table with specified dimensions and data into an existing document.
+
+  **Request Body:**
+
+  The request body is a JSON object that defines the structure of the table.
+
+  ```json
+  {
+    "rows": 3,
+    "columns": 3,
+    "data": [
+      ["A1", "B1", "C1"],
+      ["A2", "B2", "C2"],
+      ["A3", "B3", "C3"]
+    ]
+  }
+  ```
+
+  **Example `curl` Request:**
+
+  ```bash
+  curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:insertTable" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session=<SESSION_COOKIE_VALUE>" \
+  -d '{
+    "rows": 3,
+    "columns": 3,
+    "data": [
+      ["Header 1", "Header 2", "Header 3"],
+      ["Data 1", "Data 2", "Data 3"],
+      ["Data 4", "Data 5", "Data 6"]
+    ]
+  }'
+  ```
+
 ---
 
 ## Style Objects
