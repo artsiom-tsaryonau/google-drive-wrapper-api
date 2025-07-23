@@ -176,12 +176,6 @@ class PresentationService:
     def _build_add_slide_requests(self, slide_id: str, layout_config: Dict[str, Any], payload: SlidePayload) -> List[Dict[str, Any]]:
         requests = [{"createSlide": {"objectId": slide_id, "slideLayoutReference": {"predefinedLayout": layout_config["predefined_layout"]}}}]
         
-        # Handle simple text placeholders
-        content_map = {"title": payload.title, "subtitle": payload.subtitle, "body": payload.body}
-        for name, text in content_map.items():
-            if text and name in layout_config["placeholders"]:
-                requests.append({"insertText": {"objectId": slide_id, "text": text, "placeholderType": layout_config["placeholders"][name]['type']}})
-
         # Handle styled text boxes
         if payload.texts:
             for text_payload in payload.texts:
