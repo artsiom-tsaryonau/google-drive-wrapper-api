@@ -241,7 +241,7 @@ class PresentationService:
 # --- API Router ---
 
 router = APIRouter(
-    prefix="/drive/presentations",
+    prefix="/presentations",
     tags=["Presentations"],
     responses={404: {"description": "Not found"}},
 )

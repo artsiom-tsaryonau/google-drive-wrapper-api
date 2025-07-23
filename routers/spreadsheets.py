@@ -221,7 +221,7 @@ class SpreadsheetService:
 # --- API Router ---
 
 router = APIRouter(
-    prefix="/drive/spreadsheets",
+    prefix="/spreadsheets",
     tags=["Spreadsheets"],
     responses={404: {"description": "Not found"}},
 )

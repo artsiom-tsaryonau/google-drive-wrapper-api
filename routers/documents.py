@@ -263,7 +263,7 @@ class DocumentService:
 # --- API Router ---
 
 router = APIRouter(
-    prefix="/drive/documents",
+    prefix="/documents",
     tags=["Documents"],
     responses={404: {"description": "Not found"}},
 )
