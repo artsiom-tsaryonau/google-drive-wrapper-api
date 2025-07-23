@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Query
-from fastapi.responses import RedirectResponse
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request as GoogleRequest
 from googleapiclient.discovery import build
@@ -79,28 +78,6 @@ class DriveHelper:
             fields="files(id, name, mimeType)"
         ).execute()
         return results.get('files', [])
-
-    '''def _get_file_type(self, mime_type):
-        if mime_type == 'application/vnd.google-apps.folder':
-            return 'folder'
-        if mime_type == 'application/vnd.google-apps.document':
-            return 'google document'
-        if mime_type == 'application/vnd.google-apps.spreadsheet':
-            return 'spreadsheet'
-        if mime_type == 'application/vnd.google-apps.presentation':
-            return 'google presentation'
-        if mime_type == 'application/vnd.google-apps.form':
-            return 'google form'
-        if mime_type == 'application/vnd.google-apps.drawing':
-            return 'google drawing'
-        if mime_type and mime_type.startswith('image/'):
-            return 'image'
-        if mime_type and mime_type.startswith('video/'):
-            return 'video'
-        if mime_type == 'application/pdf':
-            return 'pdf'
-        return 'file'
-    '''
 
     def search(self, name):
         if name:
