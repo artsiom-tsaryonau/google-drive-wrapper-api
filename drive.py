@@ -38,14 +38,34 @@ class DriveHelper:
         
         return folder_id
 
-    def list_files_in_folder(self, folder_id):
+    def list_files_in_folder(self, folder_id, type=None):
         query = f"'{folder_id}' in parents"
         results = self.drive_service.files().list(
             q=query,
             pageSize=100,
-            fields="files(id, name, mimeType)"
+            fields="files(id, name, mimeType, parents)"
         ).execute()
-        return results.get('files', [])
+
+        # same as line 78+
+        items = results.get('files', [])
+        
+        output = []
+        for item in items:
+            parent_id = item.get('parents', [])[0] if item.get('parents') else None
+            path = self._get_path(parent_id)
+
+            if type and item.get('mimeType') != type:
+                continue
+            
+            output.append({
+                "id": item['id'],
+                "name": item['name'],
+                "mimeType": item.get('mimeType'),
+                "path": f"{path}/{item['name']}" if path else item['name'], # additional line
+                "parent_id": parent_id,
+            })
+            
+        return output
 
     def search(self, name):
         if name:
@@ -69,7 +89,8 @@ class DriveHelper:
                 "id": item['id'],
                 "name": item['name'],
                 "mimeType": item.get('mimeType'),
-                "path": f"{path}/{item['name']}" if path else item['name'] # additional line
+                "path": f"{path}/{item['name']}" if path else item['name'], # additional line
+                "parent_id": parent_id,
             })
             
         return output
@@ -78,7 +99,7 @@ def get_drive_helper(drive_service=Depends(get_drive_service)):
     return DriveHelper(drive_service)
 
 @router.get("/drive/list/{path:path}")
-async def list_drive_path(path: str, helper: DriveHelper = Depends(get_drive_helper)):
+async def list_drive_path(path: str, type: str = Query(None), helper: DriveHelper = Depends(get_drive_helper)):
     try:
         sanitized_path = path.strip('/')
         
@@ -93,8 +114,8 @@ async def list_drive_path(path: str, helper: DriveHelper = Depends(get_drive_hel
             raise HTTPException(status_code=404, detail="Folder not found at the specified path")
             
         # List the contents of the found folder
-        items = helper.list_files_in_folder(target_folder['id'])
-        return {"files": items}
+        items = helper.list_files_in_folder(target_folder['id'], type)
+        return {"results": items}
     except HttpError as error:
         raise HTTPException(status_code=500, detail=f"An error occurred: {error}")
 
