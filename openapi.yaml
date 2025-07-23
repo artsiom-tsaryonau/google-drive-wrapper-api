@@ -372,7 +372,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SlideContent'
+              $ref: '#/components/schemas/SlidePayload'
       responses:
         '201':
           description: Slide Created
@@ -386,6 +386,25 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete a slide from a presentation
+      operationId: delete_slide_drive_presentations__presentation_id__slides__slide_id__delete
+      parameters:
+        - name: presentation_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slide_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFoundError'
 components:
   schemas:
     FileItem:
@@ -461,6 +480,9 @@ components:
             type: array
             items:
               type: string
+        element_id:
+          type: string
+          nullable: true
     AppendContentPayload:
       type: object
       properties:
@@ -650,21 +672,8 @@ components:
           items:
             $ref: '#/components/schemas/Slide'
     Slide:
-      type: object
-      properties:
-        slide_id:
-          type: string
-        layout:
-          type: string
-        title:
-          type: string
-          nullable: true
-        subtitle:
-          type: string
-          nullable: true
-        body:
-          type: string
-          nullable: true
+      allOf:
+        - $ref: '#/components/schemas/SlidePayload'
     PresentationCreate:
       type: object
       required:
@@ -701,6 +710,14 @@ components:
         body:
           type: string
           description: The body text for the slide.
+        texts:
+          type: array
+          items:
+            $ref: '#/components/schemas/TextPayload'
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/TablePayload'
     SlideCreationResponse:
       type: object
       properties:
@@ -734,7 +751,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
     NotFoundError:
-      description: Not Found
+      description: The requested resource was not found.
       content:
         application/json:
           schema:

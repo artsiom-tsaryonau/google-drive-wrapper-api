@@ -16,11 +16,38 @@ class PresentationInfo(BaseModel):
     id: str
     name: str
 
+class Color(BaseModel):
+    red: float = Field(0.0, ge=0, le=1)
+    green: float = Field(0.0, ge=0, le=1)
+    blue: float = Field(0.0, ge=0, le=1)
+
+class TextStyle(BaseModel):
+    font_family: Optional[str] = None
+    font_size: Optional[int] = None
+    bold: Optional[bool] = None
+    italic: Optional[bool] = None
+    underline: Optional[bool] = None
+    strikethrough: Optional[bool] = None
+    foreground_color: Optional[Color] = None
+
+class TextPayload(BaseModel):
+    text: str
+    style: Optional[TextStyle] = None
+    element_id: Optional[str] = None
+
+class TablePayload(BaseModel):
+    rows: int
+    columns: int
+    data: List[List[str]]
+    element_id: Optional[str] = None
+
 class SlidePayload(BaseModel):
     layout: str = Field(..., description="Layout for the new slide.")
     title: Optional[str] = None
     subtitle: Optional[str] = None
     body: Optional[str] = None
+    texts: Optional[List[TextPayload]] = None
+    tables: Optional[List[TablePayload]] = None
 
 class Slide(SlidePayload):
     slide_id: str
@@ -102,6 +129,19 @@ class PresentationService:
         except (KeyError, IndexError):
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Could not get created slide ID from API response.")
 
+    def delete_slide(self, presentation_id: str, slide_id: str):
+        try:
+            self._verify_is_presentation(presentation_id)
+            requests = [{'deleteObject': {'objectId': slide_id}}]
+            self.slides_service.presentations().batchUpdate(
+                presentationId=presentation_id,
+                body={'requests': requests}
+            ).execute()
+        except HttpError as e:
+            if e.resp.status == 404:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, f"Presentation '{presentation_id}' or slide '{slide_id}' not found.")
+            raise HTTPException(e.resp.status, f"Error deleting slide: {e}")
+
     def _verify_is_presentation(self, file_id: str):
         metadata = self.drive_service.files().get(fileId=file_id, fields='mimeType').execute()
         if metadata.get('mimeType') != 'application/vnd.google-apps.presentation':
@@ -128,11 +168,75 @@ class PresentationService:
 
     def _build_add_slide_requests(self, slide_id: str, layout_config: Dict[str, Any], payload: SlidePayload) -> List[Dict[str, Any]]:
         requests = [{"createSlide": {"objectId": slide_id, "slideLayoutReference": {"predefinedLayout": layout_config["predefined_layout"]}}}]
+        
+        # Handle simple text placeholders
         content_map = {"title": payload.title, "subtitle": payload.subtitle, "body": payload.body}
         for name, text in content_map.items():
             if text and name in layout_config["placeholders"]:
                 requests.append({"insertText": {"objectId": slide_id, "text": text, "placeholderType": layout_config["placeholders"][name]['type']}})
+
+        # Handle styled text boxes
+        if payload.texts:
+            for text_payload in payload.texts:
+                requests.extend(self._build_text_requests(slide_id, text_payload))
+
+        # Handle tables
+        if payload.tables:
+            for table_payload in payload.tables:
+                requests.extend(self._build_table_requests(slide_id, table_payload))
+
         return requests
+
+    def _build_text_requests(self, slide_id: str, payload: TextPayload) -> List[Dict[str, Any]]:
+        element_id = payload.element_id or f"text_box_{uuid.uuid4().hex}"
+        requests = [
+            {"createShape": {"objectId": element_id, "shapeType": "TEXT_BOX", "elementProperties": {"pageObjectId": slide_id}}},
+            {"insertText": {"objectId": element_id, "text": payload.text}}
+        ]
+        if payload.style:
+            style_req = self._build_text_style_request(element_id, payload.style)
+            if style_req:
+                requests.append(style_req)
+        return requests
+
+    def _build_table_requests(self, slide_id: str, payload: TablePayload) -> List[Dict[str, Any]]:
+        element_id = payload.element_id or f"table_{uuid.uuid4().hex}"
+        requests = [{"createTable": {"objectId": element_id, "elementProperties": {"pageObjectId": slide_id}, "rows": payload.rows, "columns": payload.columns}}]
+        
+        for r, row_data in enumerate(payload.data):
+            for c, cell_text in enumerate(row_data):
+                requests.append({"insertText": {"objectId": element_id, "cellLocation": {"rowIndex": r, "columnIndex": c}, "text": cell_text}})
+        return requests
+
+    def _build_text_style_request(self, element_id: str, style: TextStyle) -> Optional[Dict[str, Any]]:
+        text_style = {}
+        fields = []
+        if style.font_family:
+            text_style["fontFamily"] = style.font_family
+            fields.append("fontFamily")
+        if style.font_size:
+            text_style["fontSize"] = {"magnitude": style.font_size, "unit": "PT"}
+            fields.append("fontSize")
+        if style.bold is not None:
+            text_style["bold"] = style.bold
+            fields.append("bold")
+        if style.italic is not None:
+            text_style["italic"] = style.italic
+            fields.append("italic")
+        if style.underline is not None:
+            text_style["underline"] = style.underline
+            fields.append("underline")
+        if style.strikethrough is not None:
+            text_style["strikethrough"] = style.strikethrough
+            fields.append("strikethrough")
+        if style.foreground_color:
+            text_style["foregroundColor"] = {"opaqueColor": {"rgbColor": style.foreground_color.dict()}}
+            fields.append("foregroundColor")
+
+        if not text_style:
+            return None
+
+        return {"updateTextStyle": {"objectId": element_id, "textRange": {"type": "ALL"}, "style": text_style, "fields": ",".join(fields)}}
 
 # --- API Router ---
 
@@ -165,4 +269,14 @@ def add_slide(
     service: PresentationService = Depends(PresentationService)
 ):
     """Add a new slide to an existing presentation."""
-    return service.add_slide(presentation_id, payload) 
+    return service.add_slide(presentation_id, payload)
+
+@router.delete("/{presentation_id}/slides/{slide_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_slide(
+    presentation_id: str,
+    slide_id: str,
+    service: PresentationService = Depends(PresentationService)
+):
+    """Delete a slide from a presentation."""
+    service.delete_slide(presentation_id, slide_id)
+    return {} 

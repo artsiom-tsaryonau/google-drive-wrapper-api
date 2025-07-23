@@ -25,32 +25,51 @@
 echo "--- Presentations API ---"
 
 # 1. Create a new Google Slides presentation
-echo "Creating a new presentation..."
+echo "Creating a new Google Slides presentation..."
 curl -X POST "http://localhost:8000/drive/presentations" \
 -H "Content-Type: application/json" \
 -H "Cookie: session=<SESSION_COOKIE_VALUE>" \
 -d '{
-  "title": "My Awesome Presentation"
+  "title": "My New Presentation"
 }'
-echo -e "\n"
+echo -e "\\n"
 
-# 2. Get a Google Slides presentation
-echo "Getting a presentation (replace <PRESENTATION_ID>)..."
-curl -X GET "http://localhost:8000/drive/presentations/<PRESENTATION_ID>" \
--H "Cookie: session=<SESSION_COOKIE_VALUE>"
-echo -e "\n"
-
-# 3. Add a slide to a presentation
-echo "Adding a slide to a presentation (replace <PRESENTATION_ID>)..."
+# 2. Add a slide with rich content to a presentation
+echo "Adding a slide with rich content (replace <PRESENTATION_ID>)..."
 curl -X POST "http://localhost:8000/drive/presentations/<PRESENTATION_ID>/slides" \
 -H "Content-Type: application/json" \
 -H "Cookie: session=<SESSION_COOKIE_VALUE>" \
 -d '{
   "layout": "TITLE_AND_BODY",
-  "title": "This is the Title",
-  "body": "This is the body text."
+  "title": "Rich Content Slide",
+  "texts": [
+    {
+      "text": "Styled Text",
+      "style": {
+        "font_size": 24,
+        "bold": true,
+        "foreground_color": {"red": 1}
+      }
+    }
+  ],
+  "tables": [
+    {
+      "rows": 2,
+      "columns": 2,
+      "data": [
+        ["Cell 1", "Cell 2"],
+        ["Cell 3", "Cell 4"]
+      ]
+    }
+  ]
 }'
-echo -e "\n"
+echo -e "\\n"
+
+# 3. Delete a slide from a presentation
+echo "Deleting a slide from a presentation (replace <PRESENTATION_ID> and <SLIDE_ID>)..."
+curl -X DELETE "http://localhost:8000/drive/presentations/<PRESENTATION_ID>/slides/<SLIDE_ID>" \
+-H "Cookie: session=<SESSION_COOKIE_VALUE>"
+echo -e "\\n"
 
 
 echo "--- Documents API ---"
