@@ -164,7 +164,26 @@ curl -X POST "http://localhost:8000/drive/spreadsheets/<SPREADSHEET_ID>/sheets/<
 }'
 echo -e "\n"
 
-# 5. Clear a sheet
+# 5. Append formatted data to a sheet
+echo "Appending formatted data to a sheet (replace <SPREADSHEET_ID> and <SHEET_NAME>)..."
+curl -X POST "http://localhost:8000/drive/spreadsheets/<SPREADSHEET_ID>/sheets/<SHEET_NAME>:appendFormatted" \
+-H "Content-Type: application/json" \
+-H "Cookie: session=<SESSION_COOKIE_VALUE>" \
+-d '{
+  "values": [
+    [
+      { "value": "Red & Bold", "format": { "textFormat": { "foregroundColor": { "red": 1 }, "bold": true } } },
+      { "value": "Green & Italic", "format": { "textFormat": { "foregroundColor": { "green": 1 }, "italic": true } } }
+    ],
+    [
+      { "value": "Large Font", "format": { "textFormat": { "fontSize": 18 } } },
+      { "value": "Strikethrough", "format": { "textFormat": { "strikethrough": true } } }
+    ]
+  ]
+}'
+echo -e "\n"
+
+# 6. Clear a sheet
 echo "Clearing a sheet (replace <SPREADSHEET_ID> and <SHEET_NAME>)..."
 curl -X POST "http://localhost:8000/drive/spreadsheets/<SPREADSHEET_ID>/sheets/<SHEET_NAME>:clear" \
 -H "Cookie: session=<SESSION_COOKIE_VALUE>"

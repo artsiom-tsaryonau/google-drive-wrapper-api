@@ -231,6 +231,35 @@ paths:
             application/json:
               schema:
                 type: object
+  /drive/spreadsheets/{spreadsheet_id}/sheets/{sheet_name}:appendFormatted:
+    post:
+      summary: Append Formatted Data to Sheet
+      description: Appends data with cell-level formatting to a specific sheet in a spreadsheet.
+      operationId: append_formatted_data_drive_spreadsheets__spreadsheet_id__sheets__sheet_name___appendFormatted_post
+      parameters:
+        - name: spreadsheet_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sheet_name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppendFormattedDataPayload'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
   /drive/spreadsheets/{spreadsheet_id}/sheets/{sheet_name}:clear:
     post:
       summary: Clear Sheet
@@ -496,6 +525,47 @@ components:
           type: string
         name:
           type: string
+    AppendFormattedDataPayload:
+      type: object
+      required:
+        - values
+      properties:
+        values:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/CellData'
+    CellData:
+      type: object
+      required:
+        - value
+      properties:
+        value: {}
+        format:
+          $ref: '#/components/schemas/CellFormat'
+    CellFormat:
+      type: object
+      properties:
+        textFormat:
+          $ref: '#/components/schemas/TextFormat'
+    TextFormat:
+      type: object
+      properties:
+        foregroundColor:
+          $ref: '#/components/schemas/Color'
+        fontFamily:
+          type: string
+        fontSize:
+          type: integer
+        bold:
+          type: boolean
+        italic:
+          type: boolean
+        strikethrough:
+          type: boolean
+        underline:
+          type: boolean
     AppendDataPayload:
       type: object
       required:

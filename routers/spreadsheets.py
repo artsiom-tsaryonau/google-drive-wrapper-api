@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from googleapiclient.discovery import Resource
 from googleapiclient.errors import HttpError
 
@@ -24,8 +24,32 @@ class Spreadsheet(BaseModel):
     title: str
     sheets: List[Sheet]
 
+class Color(BaseModel):
+    red: float = Field(0.0, ge=0, le=1)
+    green: float = Field(0.0, ge=0, le=1)
+    blue: float = Field(0.0, ge=0, le=1)
+
+class TextFormat(BaseModel):
+    foregroundColor: Optional[Color] = None
+    fontFamily: Optional[str] = None
+    fontSize: Optional[int] = None
+    bold: Optional[bool] = None
+    italic: Optional[bool] = None
+    strikethrough: Optional[bool] = None
+    underline: Optional[bool] = None
+
+class CellFormat(BaseModel):
+    textFormat: Optional[TextFormat] = None
+
+class CellData(BaseModel):
+    value: Any
+    format: Optional[CellFormat] = None
+
 class AppendDataPayload(BaseModel):
     values: List[List[Any]]
+    
+class AppendFormattedDataPayload(BaseModel):
+    values: List[List[CellData]]
 
 class AddSheetPayload(BaseModel):
     title: str
@@ -94,7 +118,87 @@ class SpreadsheetService:
             if e.resp.status == 404:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, f"Spreadsheet '{spreadsheet_id}' not found.")
             raise HTTPException(e.resp.status, f"Error adding sheet: {e}")
-            
+
+    def append_formatted_data(self, spreadsheet_id: str, sheet_name: str, data: AppendFormattedDataPayload) -> Dict[str, Any]:
+        try:
+            self._verify_is_spreadsheet(spreadsheet_id)
+
+            # 1. Get sheet ID
+            spreadsheet_meta = self.sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+            sheet_id = None
+            for sheet in spreadsheet_meta.get('sheets', []):
+                if sheet['properties']['title'] == sheet_name:
+                    sheet_id = sheet['properties']['sheetId']
+                    break
+            if sheet_id is None:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Sheet '{sheet_name}' not found.")
+
+            # 2. Get current number of rows to append after
+            sheet_values = self.sheets_service.spreadsheets().values().get(
+                spreadsheetId=spreadsheet_id, range=f"'{sheet_name}'!A:A"
+            ).execute()
+            start_row = len(sheet_values.get('values', []))
+
+            # 3. Build requests
+            requests = self._build_format_requests(sheet_id, start_row, data)
+
+            if requests:
+                self.sheets_service.spreadsheets().batchUpdate(
+                    spreadsheetId=spreadsheet_id, body={'requests': requests}
+                ).execute()
+
+            return {"status": "success", "message": f"Appended formatted data to {sheet_name}"}
+
+        except HttpError as e:
+            if e.resp.status == 404:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, f"Spreadsheet '{spreadsheet_id}' not found.")
+            raise HTTPException(e.resp.status, f"Error appending formatted data: {e}")
+
+    def _build_format_requests(self, sheet_id: int, start_row: int, data: AppendFormattedDataPayload) -> List[Dict[str, Any]]:
+        requests = []
+        rows_data = []
+        for r, row in enumerate(data.values):
+            row_data = {'values': []}
+            for c, cell in enumerate(row):
+                cell_data = {'userEnteredValue': self._get_user_entered_value(cell.value)}
+                if cell.format and cell.format.textFormat:
+                    cell_data['userEnteredFormat'] = {'textFormat': cell.format.textFormat.dict(exclude_none=True)}
+                row_data['values'].append(cell_data)
+
+                # This is an alternative way to format cells, but it's more verbose
+                # if cell.format:
+                #     requests.append({
+                #         'repeatCell': {
+                #             'range': {
+                #                 'sheetId': sheet_id,
+                #                 'startRowIndex': start_row + r,
+                #                 'endRowIndex': start_row + r + 1,
+                #                 'startColumnIndex': c,
+                #                 'endColumnIndex': c + 1
+                #             },
+                #             'cell': {'userEnteredFormat': cell.format.dict(exclude_none=True)},
+                #             'fields': 'userEnteredFormat(textFormat)'
+                #         }
+                #     })
+            rows_data.append(row_data)
+
+        if rows_data:
+            requests.append({
+                'appendCells': {
+                    'sheetId': sheet_id,
+                    'rows': rows_data,
+                    'fields': '*'
+                }
+            })
+        return requests
+
+    def _get_user_entered_value(self, value: Any) -> Dict[str, Any]:
+        if isinstance(value, bool):
+            return {'boolValue': value}
+        if isinstance(value, (int, float)):
+            return {'numberValue': value}
+        return {'stringValue': str(value)}
+
     def clear_sheet(self, spreadsheet_id: str, sheet_name: str) -> Dict[str, str]:
         try:
             self._verify_is_spreadsheet(spreadsheet_id)
@@ -141,6 +245,11 @@ def add_sheet(spreadsheet_id: str, payload: AddSheetPayload, service: Spreadshee
 def append_data(spreadsheet_id: str, sheet_name: str, payload: AppendDataPayload, service: SpreadsheetService = Depends(SpreadsheetService)):
     """Append data to a specific sheet in a spreadsheet."""
     return service.append_data(spreadsheet_id, sheet_name, payload.values)
+
+@router.post("/{spreadsheet_id}/sheets/{sheet_name}:appendFormatted", response_model=Dict)
+def append_formatted_data(spreadsheet_id: str, sheet_name: str, payload: AppendFormattedDataPayload, service: SpreadsheetService = Depends(SpreadsheetService)):
+    """Append data with cell-level formatting to a specific sheet."""
+    return service.append_formatted_data(spreadsheet_id, sheet_name, payload)
 
 @router.post("/{spreadsheet_id}/sheets/{sheet_name}:clear", response_model=Dict)
 def clear_sheet(spreadsheet_id: str, sheet_name: str, service: SpreadsheetService = Depends(SpreadsheetService)):
