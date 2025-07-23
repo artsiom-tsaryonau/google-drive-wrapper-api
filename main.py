@@ -15,9 +15,9 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 app.include_router(auth_router)
 app.include_router(drive_router)
-app.include_router(documents.router)
-app.include_router(spreadsheets.router)
-app.include_router(slides.router)
+app.include_router(documents.router, prefix="/drive")
+app.include_router(spreadsheets.router, prefix="/drive")
+app.include_router(slides.router, prefix="/drive")
 
 @app.get("/")
 async def read_root():

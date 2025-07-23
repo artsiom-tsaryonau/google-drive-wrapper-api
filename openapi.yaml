@@ -65,13 +65,33 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /drive/document/{file_id}:
+  /drive/documents:
+    post:
+      summary: Create Google Document
+      description: Creates a new, empty Google Document.
+      operationId: create_document_drive_documents_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentCreate'
+      responses:
+        '201':
+          description: Document Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentInfo'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /drive/documents/{document_id}:
     get:
       summary: Get Google Document
-      description: Retrieves a Google Document by its file ID.
-      operationId: get_google_document_drive_document__file_id__get
+      description: Retrieves a Google Document by its ID in a simplified format.
+      operationId: get_document_drive_documents__document_id__get
       parameters:
-        - name: file_id
+        - name: document_id
           in: path
           required: true
           schema:
@@ -82,18 +102,69 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GoogleDocument'
+                $ref: '#/components/schemas/Document'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '404':
           $ref: '#/components/responses/NotFoundError'
-  /drive/spreadsheet/{file_id}:
+  /drive/documents/{document_id}:append:
+    post:
+      summary: Append to Document
+      description: Appends text to an existing Google Document.
+      operationId: append_to_document_drive_documents__document_id___append_post
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppendTextPayload'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /drive/spreadsheets:
+    post:
+      summary: Create Google Spreadsheet
+      description: Creates a new, empty Google Spreadsheet.
+      operationId: create_spreadsheet_drive_spreadsheets_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpreadsheetCreate'
+      responses:
+        '201':
+          description: Spreadsheet Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpreadsheetInfo'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /drive/spreadsheets/{spreadsheet_id}:
     get:
       summary: Get Google Spreadsheet
-      description: Retrieves a Google Spreadsheet by its file ID.
-      operationId: get_google_spreadsheet_drive_spreadsheet__file_id__get
+      description: Retrieves a Google Spreadsheet by its ID, including all sheets and their values.
+      operationId: get_spreadsheet_drive_spreadsheets__spreadsheet_id__get
       parameters:
-        - name: file_id
+        - name: spreadsheet_id
           in: path
           required: true
           schema:
@@ -104,11 +175,85 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GoogleSpreadsheet'
-        '400':
-          $ref: '#/components/responses/BadRequestError'
+                $ref: '#/components/schemas/Spreadsheet'
         '404':
           $ref: '#/components/responses/NotFoundError'
+  /drive/spreadsheets/{spreadsheet_id}/sheets:
+    post:
+      summary: Add Sheet
+      description: Adds a new sheet to an existing spreadsheet.
+      operationId: add_sheet_drive_spreadsheets__spreadsheet_id__sheets_post
+      parameters:
+        - name: spreadsheet_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSheetPayload'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+  /drive/spreadsheets/{spreadsheet_id}/sheets/{sheet_name}:append:
+    post:
+      summary: Append Data to Sheet
+      description: Appends data to a specific sheet in a spreadsheet.
+      operationId: append_data_drive_spreadsheets__spreadsheet_id__sheets__sheet_name___append_post
+      parameters:
+        - name: spreadsheet_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sheet_name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppendDataPayload'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+  /drive/spreadsheets/{spreadsheet_id}/sheets/{sheet_name}:clear:
+    post:
+      summary: Clear Sheet
+      description: Clears all data from a specific sheet in a spreadsheet.
+      operationId: clear_sheet_drive_spreadsheets__spreadsheet_id__sheets__sheet_name___clear_post
+      parameters:
+        - name: spreadsheet_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sheet_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
   /drive/presentations:
     post:
       summary: Create Google Presentation
@@ -208,9 +353,102 @@ components:
       properties:
         detail:
           type: string
+    Document:
+      type: object
+      properties:
+        document_id:
+          type: string
+        title:
+          type: string
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Paragraph'
+    Paragraph:
+      type: object
+      properties:
+        text:
+          type: string
+    DocumentCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: The title for the new document.
+    DocumentInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    AppendTextPayload:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: The text to append to the document.
     GoogleDocument:
       type: object
       description: The JSON representation of a Google Document.
+    Spreadsheet:
+      type: object
+      properties:
+        spreadsheet_id:
+          type: string
+        title:
+          type: string
+        sheets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sheet'
+    Sheet:
+      type: object
+      properties:
+        title:
+          type: string
+        values:
+          type: array
+          items:
+            type: array
+            items:
+              type: object
+    SpreadsheetCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+    SpreadsheetInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    AppendDataPayload:
+      type: object
+      required:
+        - values
+      properties:
+        values:
+          type: array
+          items:
+            type: array
+            items:
+              type: object
+    AddSheetPayload:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
     GoogleSpreadsheet:
       type: object
       description: The JSON representation of a Google Spreadsheet.
