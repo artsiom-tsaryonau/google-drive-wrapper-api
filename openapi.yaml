@@ -217,6 +217,33 @@ components:
     GoogleSlides:
       type: object
       description: The JSON representation of a Google Slides presentation.
+    Presentation:
+      type: object
+      properties:
+        presentation_id:
+          type: string
+        title:
+          type: string
+        slides:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slide'
+    Slide:
+      type: object
+      properties:
+        slide_id:
+          type: string
+        layout:
+          type: string
+        title:
+          type: string
+          nullable: true
+        subtitle:
+          type: string
+          nullable: true
+        body:
+          type: string
+          nullable: true
     PresentationCreate:
       type: object
       required:
@@ -235,7 +262,7 @@ components:
         name:
           type: string
           description: The name of the newly created presentation.
-    SlideContent:
+    SlidePayload:
       type: object
       required:
         - layout
