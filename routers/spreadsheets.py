@@ -63,6 +63,13 @@ class SpreadsheetService:
 
     def create_spreadsheet(self, title: str) -> Dict[str, Any]:
         try:
+            '''
+                body = {
+                    'name': title,
+                    'mimeType': 'application/vnd.google-apps.spreadsheet',
+                    'parents': ['### folder ID ###']
+                }
+            '''
             metadata = {'name': title, 'mimeType': 'application/vnd.google-apps.spreadsheet'}
             file = self.drive_service.files().create(body=metadata, fields='id, name').execute()
             return file

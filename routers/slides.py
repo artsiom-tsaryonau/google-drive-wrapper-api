@@ -84,6 +84,13 @@ class PresentationService:
 
     def create_presentation(self, title: str) -> Dict[str, Any]:
         try:
+            '''
+                body = {
+                    'name': title,
+                    'mimeType': 'application/vnd.google-apps.presentation',
+                    'parents': ['### folder ID ###']
+                }
+            '''
             metadata = {'name': title, 'mimeType': 'application/vnd.google-apps.presentation'}
             file = self.drive_service.files().create(body=metadata, fields='id, name').execute()
             return file

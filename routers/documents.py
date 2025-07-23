@@ -78,6 +78,13 @@ class DocumentService:
 
     def create_document(self, title: str) -> Dict[str, Any]:
         try:
+            '''
+                body = {
+                    'name': title,
+                    'mimeType': 'application/vnd.google-apps.document',
+                    'parents': ['### folder ID ###']
+                }
+            '''
             metadata = {'name': title, 'mimeType': 'application/vnd.google-apps.document'}
             file = self.drive_service.files().create(body=metadata, fields='id, name').execute()
             return file
