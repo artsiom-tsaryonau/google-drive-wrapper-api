@@ -63,6 +63,11 @@ class TablePayload(BaseModel):
     columns: int = Field(..., gt=0)
     data: List[List[str]]
 
+class CommentPayload(BaseModel):
+    text: str
+    start_index: int
+    end_index: int
+
 
 # --- Service Class for Business Logic ---
 
@@ -123,6 +128,31 @@ class DocumentService:
             if e.resp.status == 404:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, f"Document '{document_id}' not found.")
             raise HTTPException(e.resp.status, f"Error inserting table: {e}")
+
+    def add_comment(self, document_id: str, payload: CommentPayload) -> Dict[str, Any]:
+        try:
+            self._verify_is_document(document_id)
+            
+            # The anchor format is specific to the Drive API for comments.
+            anchor = f"{{'line': {{'n': {payload.start_index}, 'l': {payload.end_index - payload.start_index}}}}}"
+            
+            comment = {
+                'content': payload.text,
+                'anchor': anchor
+            }
+            
+            # Use drive_service to create the comment
+            comment_result = self.drive_service.comments().create(
+                fileId=document_id,
+                body=comment,
+                fields='id,content,author'
+            ).execute()
+            
+            return comment_result
+        except HttpError as e:
+            if e.resp.status == 404:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, f"Document '{document_id}' not found.")
+            raise HTTPException(e.resp.status, f"Error adding comment: {e}")
 
     def _build_table_requests(self, payload: TablePayload, start_index: int) -> List[Dict[str, Any]]:
         requests = [
@@ -256,4 +286,9 @@ def append_content(document_id: str, payload: AppendContentPayload, service: Doc
 @router.post("/{document_id}:insertTable", status_code=status.HTTP_200_OK)
 def insert_table(document_id: str, payload: TablePayload, service: DocumentService = Depends(DocumentService)):
     """Insert a table into an existing Google Document."""
-    return service.insert_table(document_id, payload) 
+    return service.insert_table(document_id, payload)
+
+@router.post("/{document_id}/comments", status_code=status.HTTP_201_CREATED)
+def add_comment(document_id: str, payload: CommentPayload, service: DocumentService = Depends(DocumentService)):
+    """Add a comment to a specific text range in a Google Document."""
+    return service.add_comment(document_id, payload) 

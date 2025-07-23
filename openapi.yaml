@@ -707,6 +707,19 @@ components:
         slideId:
           type: string
           description: The ID of the newly created slide.
+    CommentPayload:
+      type: object
+      required:
+        - text
+        - start_index
+        - end_index
+      properties:
+        text:
+          type: string
+        start_index:
+          type: integer
+        end_index:
+          type: integer
   responses:
     UnauthorizedError:
       description: Unauthorized

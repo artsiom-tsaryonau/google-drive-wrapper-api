@@ -138,6 +138,18 @@ curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>:insertTable" \
 }'
 echo -e "\n"
 
+# 6. Add a comment to a document
+echo "Adding a comment to a document (replace <DOCUMENT_ID>)..."
+curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>/comments" \
+-H "Content-Type: application/json" \
+-H "Cookie: session=<SESSION_COOKIE_VALUE>" \
+-d '{
+  "text": "Could you elaborate on this point?",
+  "start_index": 20,
+  "end_index": 50
+}'
+echo -e "\n"
+
 
 echo "--- Spreadsheets API ---"
 

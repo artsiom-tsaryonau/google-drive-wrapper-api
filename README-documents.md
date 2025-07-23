@@ -165,6 +165,35 @@ All endpoints are organized under the `/drive/documents` resource path and requi
   }'
   ```
 
+### 5. Add a Comment
+
+- **`POST /drive/documents/{document_id}/comments`**
+
+  Adds a comment to a specific text range in the document.
+
+  **Request Body:**
+
+  ```json
+  {
+    "text": "This is a comment.",
+    "start_index": 1,
+    "end_index": 10
+  }
+  ```
+
+  **Example `curl` Request:**
+
+  ```bash
+  curl -X POST "http://localhost:8000/drive/documents/<DOCUMENT_ID>/comments" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session=<SESSION_COOKIE_VALUE>" \
+  -d '{
+    "text": "Could you elaborate on this point?",
+    "start_index": 20,
+    "end_index": 50
+  }'
+  ```
+
 ---
 
 ## Style Objects
