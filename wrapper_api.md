@@ -37,48 +37,22 @@ With `path` being a full path from the root to the object and parent_id. List an
 |/drive/spreadsheets/{spreadsheet_id}/sheets | POST | Creates new sheet within the existing spreadsheet |
 |/drive/spreadsheets/{spreadsheet_id}/sheets/{name} | GET | Returns a specific sheet from the existing spreadsheet |
 
-The Google Spreadsheet payload (and response) object should look like this
-```
-{
-    "title": string,
-    "sheets": [
-        {
-            "name": string
-            "table": [
-                [cell, cell],
-                [cell, cell],
-                [cell, cell]
-            ]
-            "rows": optional(int),
-            "columns": optional(int)
-        }
-    ]
-}
-```
-Later it will be extended with additional features like the ability to apply formatting on specific cell. The `table` represents the standard cell table in a corresponding sheet. When information about rows and columns is available (like when returning a sheet) it should be available in the response. 
-
-When requesting or creating `sheet` object, the response (or payload) will look the same as items in "sheets" section.
-```
-{
-    "name": string
-    "table": [
-        [cell, cell],
-        [cell, cell],
-        [cell, cell, cell]
-    ]
-    "rows": optional(int),
-    "columns": optional(int)
-}
-```
+Right now the payload and response should adhere to the google's specification for Sheet API.  
 
 ## Google Docs API
-    |
-| **Slides**     | Create new presentation                            | POST   | /drive/slides                                                 |
-|                | Get presentation                                   | GET    | /drive/slides/{presentation_id}                               |
-|                | Add new slide to existing presentation             | POST   | /drive/{presentation_id}/slides                               |
-|                | Delete slide                                       | DELETE | /drive/{presentation_id}/slides/{slide_id}                    |
-| **Documents**  | Create new document                                | POST   | /drive/documents                                              |
-|                | Get document                                       | GET    | /drive/{document_id}                                          |
-|                | Append styled content to the document              | POST   | /drive/{document_id}:appendContent                            |
-|                | Insert table into the document                     | POST   | /drive/{document_id}:insertTable                              |
-|                | Add comment to the document                        | POST   | /drive/{document_id}/comments                                 |
+
+| Endpoint | Method | Description | 
+|----------|-------|------------|
+|/drive/document | POST | Create new document based on payload |
+|/drive/document/{document_id}| GET | Return a specific document |
+
+Right now the payload and response should adhere to the google's specification for Docs API.
+
+## Google Slides API
+
+| Endpoint | Method | Description | 
+|----------|-------|------------|
+|/drive/slides | POST | Create new presentation based on payload |
+|/drive/slides/{slides_id}| GET | Return a specific presentation |
+
+Right now the payload and response should adhere to the google's specification for Slides API.
