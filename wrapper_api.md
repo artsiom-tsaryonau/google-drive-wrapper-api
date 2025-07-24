@@ -32,10 +32,10 @@ With `path` being a full path from the root to the object and parent_id. List an
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
-|/drive/spreadsheets | POST | Create new spreedsheet based on payload |
-|/drive/spreadsheets/{spreadsheet_id}| GET | Return a specific spreadsheet |
-|/drive/spreadsheets/{spreadsheet_id}/sheets | POST | Creates new sheet within the existing spreadsheet |
-|/drive/spreadsheets/{spreadsheet_id}/sheets/{name} | GET | Returns a specific sheet from the existing spreadsheet |
+| /drive/spreadsheets | POST | Create new empty spreadsheet |
+| /drive/spreadsheets/{spreadsheet_id}| GET | Return a spreadsheet by id |
+| /drive/spreadsheets/{spreadsheet_id}/sheets | POST | Creates new empty sheet within the existing spreadsheet |
+| /drive/spreadsheets/{spreadsheet_id}/sheets/{name} | GET | Returns a specific sheet from the existing spreadsheet |
 
 Right now the payload and response should adhere to the google's specification for Sheet API.  
 
@@ -43,8 +43,8 @@ Right now the payload and response should adhere to the google's specification f
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
-|/drive/document | POST | Create new document based on payload |
-|/drive/document/{document_id}| GET | Return a specific document |
+| /drive/document | POST | Create new empty presentation |
+| /drive/document/{document_id}| GET | Return a specific document |
 
 Right now the payload and response should adhere to the google's specification for Docs API.
 
@@ -52,7 +52,7 @@ Right now the payload and response should adhere to the google's specification f
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
-|/drive/slides | POST | Create new presentation based on payload |
-|/drive/slides/{slides_id}| GET | Return a specific presentation |
+| /drive/slides | POST | Create new empty presentation |
+| /drive/slides/{slides_id}| GET | Return a specific presentation |
 
 Right now the payload and response should adhere to the google's specification for Slides API.
