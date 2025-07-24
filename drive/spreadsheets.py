@@ -1,14 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from google_services import get_sheets_service
 from pydantic import BaseModel
-from typing import Any
+from typing import Any, Optional
 
 router = APIRouter()
 
-# POST /drive/spreadsheets: Create new empty spreadsheet
+# POST /drive/spreadsheets: Create new empty spreadsheet, with optional parent id
 @router.post("/drive/spreadsheets")
-async def create_spreadsheet(sheets_service=Depends(get_sheets_service)):
+async def create_spreadsheet(
+    parent: Optional[str] = Query(None, description="Optional parent folder id"),
+    sheets_service=Depends(get_sheets_service)
+):
     body = {"properties": {"title": "New Spreadsheet"}}
+    if parent:
+        body["parents"] = [parent]
     try:
         spreadsheet = sheets_service.spreadsheets().create(body=body).execute()
         return spreadsheet

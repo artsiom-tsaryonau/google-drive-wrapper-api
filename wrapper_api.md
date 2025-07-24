@@ -32,7 +32,7 @@ With `path` being a full path from the root to the object and parent_id. List an
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
-| /drive/spreadsheets | POST | Create new empty spreadsheet |
+| /drive/spreadsheets?parent= | POST | Create new empty spreadsheet, with optional parent id |
 | /drive/spreadsheets/{spreadsheet_id}| GET | Return a spreadsheet by id |
 | /drive/spreadsheets/{spreadsheet_id}/sheets | POST | Creates new empty sheet within the existing spreadsheet |
 | /drive/spreadsheets/{spreadsheet_id}/sheets/{name} | GET | Returns a specific sheet from the existing spreadsheet |
@@ -43,7 +43,7 @@ Right now the payload and response should adhere to the google's specification f
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
-| /drive/document | POST | Create new empty presentation |
+| /drive/document?parent= | POST | Create new empty presentation, with optional parent id parameter |
 | /drive/document/{document_id}| GET | Return a specific document |
 
 Right now the payload and response should adhere to the google's specification for Docs API.
@@ -52,7 +52,7 @@ Right now the payload and response should adhere to the google's specification f
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
-| /drive/slides | POST | Create new empty presentation |
+| /drive/slides?parent= | POST | Create new empty presentation, with optional parent id parameter |
 | /drive/slides/{slides_id}| GET | Return a specific presentation |
 
 Right now the payload and response should adhere to the google's specification for Slides API.

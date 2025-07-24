@@ -1,12 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from google_services import get_docs_service
+from typing import Optional
 
 router = APIRouter()
 
-# POST /drive/document: Create new empty document
+# POST /drive/document: Create new empty document, with optional parent id
 @router.post("/drive/document")
-async def create_document(docs_service=Depends(get_docs_service)):
+async def create_document(
+    parent: Optional[str] = Query(None, description="Optional parent folder id"),
+    docs_service=Depends(get_docs_service)
+):
     body = {"title": "New Document"}
+    if parent:
+        body["parents"] = [parent]
     try:
         document = docs_service.documents().create(body=body).execute()
         return document

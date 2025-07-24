@@ -2,10 +2,15 @@
 # Example usage of the Google API Wrapper endpoints
 
 BASE_URL="http://localhost:8000"
+PARENT_ID="your_parent_folder_id_here"  # Replace with a real folder ID if needed
 
 # --- Spreadsheets ---
-# Create a new spreadsheet
+# Create a new spreadsheet (no parent)
 curl -X POST "$BASE_URL/drive/spreadsheets"
+echo -e "\n---"
+
+# Create a new spreadsheet in a specific parent folder
+curl -X POST "$BASE_URL/drive/spreadsheets?parent=$PARENT_ID"
 echo -e "\n---"
 
 # Get a spreadsheet by ID
@@ -23,8 +28,12 @@ curl "$BASE_URL/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/
 echo -e "\n---"
 
 # --- Documents ---
-# Create a new document
+# Create a new document (no parent)
 curl -X POST "$BASE_URL/drive/document"
+echo -e "\n---"
+
+# Create a new document in a specific parent folder
+curl -X POST "$BASE_URL/drive/document?parent=$PARENT_ID"
 echo -e "\n---"
 
 # Get a document by ID
@@ -32,8 +41,12 @@ curl "$BASE_URL/drive/document/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo"
 echo -e "\n---"
 
 # --- Slides ---
-# Create a new slide presentation
+# Create a new slide presentation (no parent)
 curl -X POST "$BASE_URL/drive/slides"
+echo -e "\n---"
+
+# Create a new slide presentation in a specific parent folder
+curl -X POST "$BASE_URL/drive/slides?parent=$PARENT_ID"
 echo -e "\n---"
 
 # Get a slide presentation by ID

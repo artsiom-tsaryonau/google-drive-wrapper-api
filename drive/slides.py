@@ -1,12 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from google_services import get_slides_service
+from typing import Optional
 
 router = APIRouter()
 
-# POST /drive/slides: Create new empty presentation
+# POST /drive/slides: Create new empty presentation, with optional parent id
 @router.post("/drive/slides")
-async def create_presentation(slides_service=Depends(get_slides_service)):
+async def create_presentation(
+    parent: Optional[str] = Query(None, description="Optional parent folder id"),
+    slides_service=Depends(get_slides_service)
+):
     body = {"title": "New Presentation"}
+    if parent:
+        body["parents"] = [parent]
     try:
         presentation = slides_service.presentations().create(body=body).execute()
         return presentation
