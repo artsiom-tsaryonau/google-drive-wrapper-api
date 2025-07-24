@@ -129,7 +129,7 @@ async def delete_range(
 
 # PUT /drive/spreadsheets/{spreadsheet_id}/sheets/{name}/range: Updates the range based on A1 notation with payload containing the values and query parameter containing range
 class UpdateRangeRequest(BaseModel):
-    values: list
+    values: Optional[list] = None
     format: Optional[Dict[str, Any]] = None  # Optional formatting
 
 def a1_to_grid_range(a1: str) -> dict:
@@ -183,13 +183,15 @@ async def update_sheet_range(
             raise HTTPException(status_code=404, detail=f"Sheet '{name}' not found.")
         # Compose the full range as 'SheetName!A1:B2'
         full_range = f"{name}!{a1}"
-        # Update values
-        result = sheets_service.spreadsheets().values().update(
-            spreadsheetId=spreadsheet_id,
-            range=full_range,
-            valueInputOption="RAW",
-            body={"values": req.values}
-        ).execute()
+        result = None
+        # Update values if provided
+        if req.values is not None:
+            result = sheets_service.spreadsheets().values().update(
+                spreadsheetId=spreadsheet_id,
+                range=full_range,
+                valueInputOption="RAW",
+                body={"values": req.values}
+            ).execute()
         # Optionally apply formatting
         if req.format:
             grid_range = a1_to_grid_range(a1)
@@ -206,6 +208,12 @@ async def update_sheet_range(
                 ]
             }
             sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-        return result
+        # If only formatting was applied, return a success message
+        if result is not None:
+            return result
+        elif req.format:
+            return {"status": "formatting applied"}
+        else:
+            raise HTTPException(status_code=400, detail="No values or format provided.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 

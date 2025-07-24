@@ -38,7 +38,7 @@ With `path` being a full path from the root to the object and parent_id. List an
 | /drive/spreadsheets/{spreadsheet_id}/sheets/{name} | GET | Returns a specific sheet from the existing spreadsheet |
 | /drive/spreadsheets/{spreadsheet_id}/sheets/{name} | DELETE | Deletes a specific sheet from the spreadsheet |
 | /drive/spreadsheets/{spreadsheet_id}/sheets/{name}/range?a1= | GET | Returns the range based on A1 notation provided in range query parameter |
-| /drive/spreadsheets/{spreadsheet_id}/sheets/{name}/range?a1= | PUT | Updates the range based on A1 notation with payload containing the values and query parameter containing range. Allows to specify the formatting for cells. |
+| /drive/spreadsheets/{spreadsheet_id}/sheets/{name}/range?a1= | PUT | Updates the range based on A1 notation with payload containing the values and query parameter containing range. Requires either values or format to be provided. |
 | /drive/spreadsheets/{spreadsheet_id}/sheets/{name}/range?a1= | DELETE | Deletes a range from the sheet based on A1 |
 Right now the payload and response should adhere to the google's specification for Sheet API.  
 
