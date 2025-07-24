@@ -68,6 +68,20 @@ curl -X PUT -H "Content-Type: application/json" \
   "$BASE_URL/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B2"
 echo -e "\n---"
 
+# Delete a sheet from a spreadsheet
+curl -X DELETE "$BASE_URL/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet2"
+echo -e "\n---"
+
+# Delete a range from a sheet using A1 notation
+curl -X DELETE "$BASE_URL/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B2"
+echo -e "\n---"
+
+# Update a range in a sheet with formatting
+curl -X PUT -H "Content-Type: application/json" \
+  -d '{"values": [["Bold", "Red"]], "format": {"textFormat": {"bold": true}, "backgroundColor": {"red": 1, "green": 0.8, "blue": 0.8}}}' \
+  "$BASE_URL/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B1"
+echo -e "\n---"
+
 # --- Documents ---
 # Create a new document (no parent)
 curl -X POST "$BASE_URL/drive/documents"

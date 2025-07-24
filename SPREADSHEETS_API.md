@@ -80,6 +80,73 @@ curl "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c
 }
 ```
 
+### Delete a Sheet from a Spreadsheet
+```
+DELETE /drive/spreadsheets/{spreadsheet_id}/sheets/{name}
+```
+- **Description:** Delete a specific sheet from a spreadsheet by its name.
+- **Sample Request:**
+```
+curl -X DELETE "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet2"
+```
+- **Sample Response:**
+```json
+{
+  "replies": [ ... ],
+  ...
+}
+```
+
+### Delete a Range from a Sheet
+```
+DELETE /drive/spreadsheets/{spreadsheet_id}/sheets/{name}?a1={A1_notation}
+```
+- **Description:** Delete (clear) a range from a sheet using A1 notation.
+- **Sample Request:**
+```
+curl -X DELETE "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1?a1=A1:B2"
+```
+- **Sample Response:**
+```json
+{
+  "clearedRange": "Sheet1!A1:B2"
+}
+```
+
+### Update a Range in a Sheet (with Formatting)
+```
+PUT /drive/spreadsheets/{spreadsheet_id}/sheets/{name}/range?a1={A1_notation}
+```
+- **Description:** Update values in a specific range in a sheet using A1 notation. Optionally specify cell formatting in the request body.
+- **Sample Request:**
+```
+curl -X PUT -H "Content-Type: application/json" \
+  -d '{"values": [["Bold", "Red"]], "format": {"textFormat": {"bold": true}, "backgroundColor": {"red": 1, "green": 0.8, "blue": 0.8}}}' \
+  "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B1"
+```
+- **Sample Request Body:**
+```json
+{
+  "values": [["Bold", "Red"]],
+  "format": {
+    "textFormat": {"bold": true},
+    "backgroundColor": {"red": 1, "green": 0.8, "blue": 0.8}
+  }
+}
+```
+- **Sample Response:**
+```json
+{
+  "spreadsheetId": "1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY",
+  "updatedRange": "Sheet1!A1:B1",
+  "updatedRows": 1,
+  "updatedColumns": 2,
+  "updatedCells": 2
+}
+```
+
+> **Note:** The `format` field is optional. If provided, it will apply the specified formatting to the range. The format object follows the [Google Sheets API userEnteredFormat schema](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat).
+
 ---
 
 ## Range Endpoints (A1 Notation)
