@@ -58,6 +58,16 @@ echo -e "\n---"
 curl "$BASE_URL/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1"
 echo -e "\n---"
 
+# Get a range from a sheet using A1 notation
+curl "$BASE_URL/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B2"
+echo -e "\n---"
+
+# Update a range in a sheet using A1 notation
+curl -X PUT -H "Content-Type: application/json" \
+  -d '{"values": [["New Value 1", "New Value 2"], ["New Value 3", "New Value 4"]]}' \
+  "$BASE_URL/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B2"
+echo -e "\n---"
+
 # --- Documents ---
 # Create a new document (no parent)
 curl -X POST "$BASE_URL/drive/documents"
