@@ -4,6 +4,24 @@
 BASE_URL="http://localhost:8000"
 PARENT_ID="your_parent_folder_id_here"  # Replace with a real folder ID if needed
 
+# --- Authentication Example ---
+# 1. Log in to get the authentication URL (opens browser for OAuth)
+echo "Visit the following URL in your browser to authenticate via Google:"
+curl -i "$BASE_URL/login"
+echo -e "\n---"
+
+# 2. After authenticating, your browser will store a session cookie. To use curl with authentication, export the cookie from your browser and use it like this:
+# export SESSION_COOKIE="session=your_session_cookie_here"
+# curl -b "$SESSION_COOKIE" "$BASE_URL/drive/search?name=Sample"
+
+# You can use the -b flag with any curl command below to make authenticated requests.
+
+# --- Authenticated Request Example ---
+# Example: Search Google Drive objects by name using a session cookie
+SESSION_COOKIE="session=your_session_cookie_here"  # Replace with your actual session cookie value
+curl -b "$SESSION_COOKIE" "$BASE_URL/drive/search?name=Sample&mimeType="
+echo -e "\n---"
+
 # --- Drive API ---
 # Search Google Drive objects by name (optionally filter by mimeType)
 curl "$BASE_URL/drive/search?name=Sample&mimeType="
@@ -42,15 +60,21 @@ echo -e "\n---"
 
 # --- Documents ---
 # Create a new document (no parent)
-curl -X POST "$BASE_URL/drive/document"
+curl -X POST "$BASE_URL/drive/documents"
 echo -e "\n---"
 
 # Create a new document in a specific parent folder
-curl -X POST "$BASE_URL/drive/document?parent=$PARENT_ID"
+curl -X POST "$BASE_URL/drive/documents?parent=$PARENT_ID"
 echo -e "\n---"
 
 # Get a document by ID
-curl "$BASE_URL/drive/document/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo"
+curl "$BASE_URL/drive/documents/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo"
+echo -e "\n---"
+
+# Add a heading to a document (h1, h2, etc.)
+curl -X PUT -H "Content-Type: application/json" \
+  -d '{"text": "My Heading", "level": 1}' \
+  "$BASE_URL/drive/documents/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/heading"
 echo -e "\n---"
 
 # --- Slides ---

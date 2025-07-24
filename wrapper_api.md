@@ -45,6 +45,7 @@ Right now the payload and response should adhere to the google's specification f
 |----------|-------|------------|
 | /drive/documents?parent= | POST | Create new empty document, with optional parent id parameter |
 | /drive/documents/{document_id}| GET | Return a specific document |
+| /drive/documents/{document_id}/heading | PUT | Adds new heading (h1, h2 etc.) to the document |
 
 Right now the payload and response should adhere to the google's specification for Docs API.
 
