@@ -39,7 +39,7 @@ With `path` being a full path from the root to the object and parent_id. List an
 
 Right now the payload and response should adhere to the google's specification for Sheet API.  
 
-## Google Docs API
+## Google Documents API
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
