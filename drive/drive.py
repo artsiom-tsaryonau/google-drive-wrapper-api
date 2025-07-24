@@ -29,7 +29,7 @@ async def search_drive(
     mimeType: Optional[str] = Query(None, description="Filter by mimeType"),
     drive_service=Depends(get_drive_service)
 ) -> List[DriveObject]:
-    """Search Google Drive objects by name and/or mimeType."""
+    """Search Google Drive objects by name with optional mimeType filter."""
     try:
         q = []
         if name:
@@ -43,13 +43,13 @@ async def search_drive(
     except HttpError as e:
         raise HTTPException(status_code=500, detail=f"Google API error: {e}")
 
-@router.get("/drive/{path:path}", response_model=List[DriveObject])
+@router.get("/drive/navigate/{path:path}", response_model=List[DriveObject])
 async def list_drive_path(
     path: str,
     mimeType: Optional[str] = Query(None, description="Filter by mimeType"),
     drive_service=Depends(get_drive_service)
 ) -> List[DriveObject]:
-    """List Google Drive content in a specific path, with optional mimeType filter."""
+    """List Google Drive content in a specific path with optional mimeType filter."""
     try:
         parts = [p for p in path.strip("/").split("/") if p]
         parent_id = "root"

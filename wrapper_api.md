@@ -13,7 +13,7 @@ The goal is implement a wrapper over a clunky Google Drive/Docs/Sheets/Slides AP
 | Endpoint | Method | Description | 
 |----------|-------|------------|
 | /drive/search?name=&mimeType= | GET | Search Google Drive objects by name with optional mimeType |
-| /drive/{path:path}?mimeType= | GET | List google drive content in a specific path with optional mimeType filter |
+| /drive/navigate/{path:path}?mimeType= | GET | List google drive content in a specific path with optional mimeType filter |
 | /drive/{id} | DELETE | Deletes and object by id from the Google Drive |
 
 The Google Drive object information should look like this
@@ -43,8 +43,8 @@ Right now the payload and response should adhere to the google's specification f
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
-| /drive/document?parent= | POST | Create new empty presentation, with optional parent id parameter |
-| /drive/document/{document_id}| GET | Return a specific document |
+| /drive/documents?parent= | POST | Create new empty document, with optional parent id parameter |
+| /drive/documents/{document_id}| GET | Return a specific document |
 
 Right now the payload and response should adhere to the google's specification for Docs API.
 

@@ -4,6 +4,19 @@
 BASE_URL="http://localhost:8000"
 PARENT_ID="your_parent_folder_id_here"  # Replace with a real folder ID if needed
 
+# --- Drive API ---
+# Search Google Drive objects by name (optionally filter by mimeType)
+curl "$BASE_URL/drive/search?name=Sample&mimeType="
+echo -e "\n---"
+
+# List Google Drive content in a specific path (optionally filter by mimeType)
+curl "$BASE_URL/drive/navigate/folder1/folder2?mimeType="
+echo -e "\n---"
+
+# Delete an object by ID
+curl -X DELETE "$BASE_URL/drive/your_file_or_folder_id_here"
+echo -e "\n---"
+
 # --- Spreadsheets ---
 # Create a new spreadsheet (no parent)
 curl -X POST "$BASE_URL/drive/spreadsheets"
