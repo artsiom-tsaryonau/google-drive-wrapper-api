@@ -7,6 +7,7 @@ The goal is implement a wrapper over a clunky Google Drive/Docs/Sheets/Slides AP
 | document| 1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo | Simple sample google document |
 | slide | 17rCbrfnQiFBWqHQCOJ5U7bug05C5XF9c4o4ptRrrOHY | Simple sample google slide |
 | sheet | 1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY | Simple same google spreadsheet |
+| parent | 1xa0a3Z4YUfDZ3FQS4LrpdOZEkVp8hrq7 | Parent id |
 
 ## Google Drive API
 

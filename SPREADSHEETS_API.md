@@ -97,44 +97,38 @@ curl -X DELETE "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0Xl
 }
 ```
 
-### Delete a Range from a Sheet
-```
-DELETE /drive/spreadsheets/{spreadsheet_id}/sheets/{name}?a1={A1_notation}
-```
-- **Description:** Delete (clear) a range from a sheet using A1 notation.
-- **Sample Request:**
-```
-curl -X DELETE "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1?a1=A1:B2"
-```
-- **Sample Response:**
-```json
-{
-  "clearedRange": "Sheet1!A1:B2"
-}
-```
-
-### Update a Range in a Sheet (with Formatting)
+### Update a Range in a Sheet (with Formatting or Values)
 ```
 PUT /drive/spreadsheets/{spreadsheet_id}/sheets/{name}/range?a1={A1_notation}
 ```
-- **Description:** Update values in a specific range in a sheet using A1 notation. Optionally specify cell formatting in the request body.
-- **Sample Request:**
+- **Description:** Update values and/or formatting in a specific range in a sheet using A1 notation. The request body must include at least one of `values` or `format`.
+- **Sample Request (values and formatting):**
 ```
-curl -X PUT -H "Content-Type: application/json" \
+curl -b "$SESSION_COOKIE" -X PUT -H "Content-Type: application/json" \
   -d '{"values": [["Bold", "Red"]], "format": {"textFormat": {"bold": true}, "backgroundColor": {"red": 1, "green": 0.8, "blue": 0.8}}}' \
   "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B1"
 ```
-- **Sample Request Body:**
+- **Sample Request (formatting only):**
+```
+curl -b "$SESSION_COOKIE" -X PUT -H "Content-Type: application/json" \
+  -d '{"format": {"backgroundColor": {"red": 1, "green": 1, "blue": 0.5}}}' \
+  "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=B2:B3"
+```
+- **Sample Request Body (formatting only):**
 ```json
 {
-  "values": [["Bold", "Red"]],
   "format": {
-    "textFormat": {"bold": true},
-    "backgroundColor": {"red": 1, "green": 0.8, "blue": 0.8}
+    "backgroundColor": {"red": 1, "green": 1, "blue": 0.5}
   }
 }
 ```
-- **Sample Response:**
+- **Sample Response (formatting only):**
+```json
+{
+  "status": "formatting applied"
+}
+```
+- **Sample Response (values and/or formatting):**
 ```json
 {
   "spreadsheetId": "1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY",
@@ -145,7 +139,23 @@ curl -X PUT -H "Content-Type: application/json" \
 }
 ```
 
-> **Note:** The `format` field is optional. If provided, it will apply the specified formatting to the range. The format object follows the [Google Sheets API userEnteredFormat schema](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat).
+> **Note:** The `format` field is optional. If provided, it will apply the specified formatting to the range. The format object follows the [Google Sheets API userEnteredFormat schema](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat). The `values` field is also optional, but at least one of `values` or `format` must be provided.
+
+### Delete a Range from a Sheet
+```
+DELETE /drive/spreadsheets/{spreadsheet_id}/sheets/{name}/range?a1={A1_notation}
+```
+- **Description:** Delete (clear) a range from a sheet using A1 notation.
+- **Sample Request:**
+```
+curl -b "$SESSION_COOKIE" -X DELETE "http://localhost:8000/drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B2"
+```
+- **Sample Response:**
+```json
+{
+  "clearedRange": "Sheet1!A1:B2"
+}
+```
 
 ---
 
@@ -208,4 +218,5 @@ curl -X PUT -H "Content-Type: application/json" \
 ## Notes
 - All endpoints require authentication via a session cookie.
 - The API is a thin wrapper over the Google Sheets API; request and response formats closely follow the official Google API.
+- Use the `a1` query parameter to specify ranges in A1 notation (e.g., `A1:B2`). 
 - Use the `a1` query parameter to specify ranges in A1 notation (e.g., `A1:B2`). 
