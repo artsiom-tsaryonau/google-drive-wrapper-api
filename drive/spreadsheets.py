@@ -118,12 +118,29 @@ async def delete_range(
     sheets_service=Depends(get_sheets_service)
 ):
     try:
-        full_range = f"{name}!{a1}"
-        result = sheets_service.spreadsheets().values().clear(
-            spreadsheetId=spreadsheet_id,
-            range=full_range,
-            body={}
-        ).execute()
+        # Find the sheet ID by name
+        spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+        sheets = spreadsheet.get("sheets", [])
+        sheet_id = None
+        for sheet in sheets:
+            if sheet["properties"]["title"] == name:
+                sheet_id = sheet["properties"]["sheetId"]
+                break
+        if sheet_id is None:
+            raise HTTPException(status_code=404, detail=f"Sheet '{name}' not found.")
+        grid_range = a1_to_grid_range(a1)
+        grid_range["sheetId"] = sheet_id
+        body = {
+            "requests": [
+                {
+                    "updateCells": {
+                        "range": grid_range,
+                        "fields": "userEnteredValue"
+                    }
+                }
+            ]
+        }
+        result = sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -182,41 +199,39 @@ async def update_sheet_range(
                 break
         if sheet_id is None:
             raise HTTPException(status_code=404, detail=f"Sheet '{name}' not found.")
-        # Compose the full range as 'SheetName!A1:B2'
-        full_range = f"{name}!{a1}"
-        result = None
-        # Update values if provided
-        if req.values is not None:
-            result = sheets_service.spreadsheets().values().update(
-                spreadsheetId=spreadsheet_id,
-                range=full_range,
-                valueInputOption="RAW",
-                body={"values": req.values}
-            ).execute()
-        # Optionally apply formatting
-        if req.format:
-            grid_range = a1_to_grid_range(a1)
-            grid_range["sheetId"] = sheet_id
-            body = {
-                "requests": [
-                    {
-                        "repeatCell": {
-                            "range": grid_range,
-                            "cell": {"userEnteredFormat": req.format},
-                            "fields": "userEnteredFormat(" + ",".join(req.format.keys()) + ")"
-                        }
-                    }
-                ]
-            }
-            # import json
-            # print(json.dumps(body, indent=4))
-            sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-        # If only formatting was applied, return a success message
-        if result is not None:
-            return result
-        elif req.format:
-            return {"status": "formatting applied"}
-        else:
+        grid_range = a1_to_grid_range(a1)
+        grid_range["sheetId"] = sheet_id
+        requests = []
+        # If values or format are provided, use updateCells
+        if req.values is not None or req.format is not None:
+            row_data = []
+            if req.values is not None:
+                for row in req.values:
+                    row_data.append({
+                        "values": [
+                            {"userEnteredValue": {"stringValue": str(cell)} if not isinstance(cell, dict) else cell} for cell in row
+                        ]
+                    })
+            fields = []
+            if req.values is not None:
+                fields.append("userEnteredValue")
+            if req.format is not None:
+                # Apply the same format to all cells in the range
+                for row in row_data:
+                    for cell in row["values"]:
+                        cell["userEnteredFormat"] = req.format
+                fields.append("userEnteredFormat")
+            requests.append({
+                "updateCells": {
+                    "range": grid_range,
+                    "rows": row_data if row_data else None,
+                    "fields": ",".join(fields)
+                }
+            })
+        if not requests:
             raise HTTPException(status_code=400, detail="No values or format provided.")
+        body = {"requests": requests}
+        result = sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+        return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
