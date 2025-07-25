@@ -9,9 +9,10 @@ router = APIRouter()
 @router.post("/drive/spreadsheets")
 async def create_spreadsheet(
     parent: Optional[str] = Query(None, description="Optional parent folder id"),
+    title: str = Query(..., description="Spreadsheet title"),
     sheets_service=Depends(get_sheets_service)
 ):
-    body = {"properties": {"title": "New Spreadsheet"}}
+    body = {"properties": {"title": title}}
     if parent:
         body["parents"] = [parent]
     try:
@@ -202,11 +203,13 @@ async def update_sheet_range(
                         "repeatCell": {
                             "range": grid_range,
                             "cell": {"userEnteredFormat": req.format},
-                            "fields": ",".join(req.format.keys())
+                            "fields": "userEnteredFormat(" + ",".join(req.format.keys()) + ")"
                         }
                     }
                 ]
             }
+            # import json
+            # print(json.dumps(body, indent=4))
             sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
         # If only formatting was applied, return a success message
         if result is not None:

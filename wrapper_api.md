@@ -33,7 +33,7 @@ With `path` being a full path from the root to the object and parent_id. List an
 
 | Endpoint | Method | Description | 
 |----------|-------|------------|
-| /drive/spreadsheets?parent= | POST | Create new empty spreadsheet, with optional parent id |
+| /drive/spreadsheets?parent=&title= | POST | Create new empty spreadsheet, with optional parent id |
 | /drive/spreadsheets/{spreadsheet_id}| GET | Return a spreadsheet by id |
 | /drive/spreadsheets/{spreadsheet_id}/sheets | POST | Creates new empty sheet within the existing spreadsheet |
 | /drive/spreadsheets/{spreadsheet_id}/sheets/{name} | GET | Returns a specific sheet from the existing spreadsheet |
