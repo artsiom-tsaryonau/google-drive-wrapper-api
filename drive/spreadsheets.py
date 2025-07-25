@@ -12,6 +12,19 @@ async def create_spreadsheet(
     title: str = Query(..., description="Spreadsheet title"),
     sheets_service=Depends(get_sheets_service)
 ):
+    """
+    Create a new empty spreadsheet with an optional parent folder.
+    
+    Example input request:
+        POST /drive/spreadsheets?title=MySheet&parent=1xa0a3Z4YUfDZ3FQS4LrpdOZEkVp8hrq7
+    
+    Google API request sent:
+        {
+            "properties": {"title": "MySheet"},
+            "parents": ["1xa0a3Z4YUfDZ3FQS4LrpdOZEkVp8hrq7"]
+        }
+        (POST to sheets_service.spreadsheets().create)
+    """
     body = {"properties": {"title": title}}
     if parent:
         body["parents"] = [parent]
@@ -24,6 +37,15 @@ async def create_spreadsheet(
 # GET /drive/spreadsheets/{spreadsheet_id}: Return a spreadsheet by id
 @router.get("/drive/spreadsheets/{spreadsheet_id}")
 async def get_spreadsheet(spreadsheet_id: str, sheets_service=Depends(get_sheets_service)):
+    """
+    Get a spreadsheet by its ID.
+    
+    Example input request:
+        GET /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY
+    
+    Google API request sent:
+        sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id)
+    """
     try:
         spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
         return spreadsheet
@@ -36,6 +58,21 @@ class NewSheetRequest(BaseModel):
 
 @router.post("/drive/spreadsheets/{spreadsheet_id}/sheets")
 async def create_sheet(spreadsheet_id: str, req: NewSheetRequest, sheets_service=Depends(get_sheets_service)):
+    """
+    Create a new empty sheet within an existing spreadsheet.
+    
+    Example input request:
+        POST /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets
+        Body: {"name": "Sheet2"}
+    
+    Google API request sent:
+        {
+            "requests": [
+                {"addSheet": {"properties": {"title": "Sheet2"}}}
+            ]
+        }
+        (POST to sheets_service.spreadsheets().batchUpdate)
+    """
     body = {
         "requests": [
             {"addSheet": {"properties": {"title": req.name}}}
@@ -52,6 +89,15 @@ async def create_sheet(spreadsheet_id: str, req: NewSheetRequest, sheets_service
 # GET /drive/spreadsheets/{spreadsheet_id}/sheets/{name}: Return a specific sheet by name
 @router.get("/drive/spreadsheets/{spreadsheet_id}/sheets/{name}")
 async def get_sheet(spreadsheet_id: str, name: str, sheets_service=Depends(get_sheets_service)):
+    """
+    Get a specific sheet from a spreadsheet by its name.
+    
+    Example input request:
+        GET /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1
+    
+    Google API request sent:
+        sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id)
+    """
     try:
         spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
         sheets = spreadsheet.get("sheets", [])
@@ -70,6 +116,17 @@ async def get_sheet_range(
     a1: str = Query(..., description="A1 notation range, e.g. 'A1:B2'"),
     sheets_service=Depends(get_sheets_service)
 ):
+    """
+    Get the values in a specific range of a sheet using A1 notation.
+    
+    Example input request:
+        GET /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B2
+    
+    Google API request sent:
+        sheets_service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id, range="Sheet1!A1:B2"
+        )
+    """
     try:
         # Find the sheet ID by name
         spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
@@ -93,6 +150,20 @@ async def get_sheet_range(
 # DELETE /drive/spreadsheets/{spreadsheet_id}/sheets/{name}: Deletes a specific sheet from the spreadsheet
 @router.delete("/drive/spreadsheets/{spreadsheet_id}/sheets/{name}")
 async def delete_sheet(spreadsheet_id: str, name: str, sheets_service=Depends(get_sheets_service)):
+    """
+    Delete a specific sheet from a spreadsheet by its name.
+    
+    Example input request:
+        DELETE /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1
+    
+    Google API request sent:
+        {
+            "requests": [
+                {"deleteSheet": {"sheetId": 0}}
+            ]
+        }
+        (POST to sheets_service.spreadsheets().batchUpdate)
+    """
     try:
         spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
         sheets = spreadsheet.get("sheets", [])
@@ -117,6 +188,25 @@ async def delete_range(
     a1: str = Query(..., description="A1 notation range to clear, e.g. 'A1:B2'"),
     sheets_service=Depends(get_sheets_service)
 ):
+    """
+    Clear all values in a specified range of a sheet.
+    
+    Example input request:
+        DELETE /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B2
+    
+    Google API request sent:
+        {
+            "requests": [
+                {
+                    "updateCells": {
+                        "range": {"sheetId": 0, ...},
+                        "fields": "userEnteredValue"
+                    }
+                }
+            ]
+        }
+        (POST to sheets_service.spreadsheets().batchUpdate)
+    """
     try:
         # Find the sheet ID by name
         spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
@@ -188,6 +278,32 @@ async def update_sheet_range(
     req: UpdateRangeRequest = Body(...),
     sheets_service=Depends(get_sheets_service)
 ):
+    """
+    Update values and/or formatting in a specified range of a sheet.
+    
+    Example input request:
+        PUT /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet1/range?a1=A1:B2
+        Body: {"values": [["A", "B"]], "format": {"textFormat": {"bold": true}}}
+    
+    Google API request sent:
+        {
+            "requests": [
+                {
+                    "updateCells": {
+                        "range": {"sheetId": 0, ...},
+                        "rows": [
+                            {"values": [
+                                {"userEnteredValue": {"stringValue": "A"}, "userEnteredFormat": {"textFormat": {"bold": true}}},
+                                {"userEnteredValue": {"stringValue": "B"}, "userEnteredFormat": {"textFormat": {"bold": true}}}
+                            ]}
+                        ],
+                        "fields": "userEnteredValue,userEnteredFormat"
+                    }
+                }
+            ]
+        }
+        (POST to sheets_service.spreadsheets().batchUpdate)
+    """
     try:
         # Find the sheet ID by name
         spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
