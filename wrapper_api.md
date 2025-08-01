@@ -51,6 +51,9 @@ Right now the payload and response should adhere to the google's specification f
 | /drive/documents?parent=&title= | POST | Create new empty document, with optional parent id parameter |
 | /drive/documents/{document_id} | GET | Return a specific document by id |
 | /drive/documents/{document_id} | DELETE | Delete document by id |
+| /drive/documents/{document_id}/tabs/{name} | POST | Creates new empty tab in the document |
+| /drive/documents/{document_id}/tabs/{name} | GET | Returns existing tab content from the document |
+| /drive/documents/{document_id}/tabs/{name} | DELETE | Delete existing tab and content from the document |
 
 Right now the payload and response should adhere to the google's specification for Docs API.
 
