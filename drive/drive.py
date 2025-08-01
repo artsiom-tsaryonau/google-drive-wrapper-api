@@ -15,6 +15,7 @@ class DriveObject(BaseModel):
 
 class CommentRequest(BaseModel):
     content: str
+    anchor: Optional[dict] = None  # For anchored comments, contains location info
 
 class ReplyRequest(BaseModel):
     content: str
@@ -97,22 +98,50 @@ async def add_comment(
     drive_service=Depends(get_drive_service)
 ):
     """
-    Add a new unanchored comment to a file.
+    Add a new comment to a file. Supports both unanchored and anchored comments.
     
-    Example input request:
+    For unanchored comments:
         POST /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment
         Body: {"content": "This is a comment on the file"}
+    
+    For anchored comments (Google Docs):
+        POST /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment
+        Body: {
+            "content": "This is a comment on specific text",
+            "anchor": {
+                "startIndex": 10,
+                "endIndex": 20
+            }
+        }
+    
+    For anchored comments (Google Sheets):
+        POST /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment
+        Body: {
+            "content": "This is a comment on a cell",
+            "anchor": {
+                "sheetId": "sheet_id_123",
+                "rowIndex": 5,
+                "columnIndex": 3
+            }
+        }
     
     Google API request sent:
         drive_service.comments().create(
             fileId=file_id,
-            body={"content": "This is a comment on the file"}
+            body={"content": "comment content", "anchor": {...}}
         )
     """
     try:
+        # Build the comment body
+        comment_body = {"content": req.content}
+        
+        # Add anchor if provided
+        if req.anchor:
+            comment_body["anchor"] = req.anchor
+        
         comment = drive_service.comments().create(
             fileId=file_id,
-            body={"content": req.content}
+            body=comment_body
         ).execute()
         return comment
     except HttpError as e:
@@ -120,6 +149,8 @@ async def add_comment(
             raise HTTPException(status_code=404, detail=f"File with id '{file_id}' not found.")
         elif e.resp.status == 403:
             raise HTTPException(status_code=403, detail="Permission denied. Comments may not be supported for this file type.")
+        elif e.resp.status == 400:
+            raise HTTPException(status_code=400, detail="Invalid anchor parameters. Check the anchor format for the file type.")
         raise HTTPException(status_code=500, detail=f"Google API error: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

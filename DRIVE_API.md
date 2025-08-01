@@ -62,21 +62,72 @@ curl "http://localhost:8000/drive/navigate/folder1/folder2?mimeType=application/
 ```
 POST /drive/{file_id}/comment
 ```
-- **Description:** Add a new unanchored comment to a file.
+- **Description:** Add a new comment to a file. Supports both unanchored and anchored comments.
 - **Parameters:**
   - `file_id` (required): The ID of the file to comment on
 - **Request Body:**
 ```json
 {
-  "content": "This is a comment on the file"
+  "content": "This is a comment on the file",
+  "anchor": {
+    // Optional: For anchored comments
+  }
 }
 ```
-- **Sample Request:**
+
+#### Unanchored Comments
+For general comments on the entire file:
+```json
+{
+  "content": "This is a general comment on the file"
+}
+```
+
+#### Anchored Comments for Google Docs
+For comments on specific text:
+```json
+{
+  "content": "This is a comment on specific text",
+  "anchor": {
+    "startIndex": 10,
+    "endIndex": 20
+  }
+}
+```
+
+#### Anchored Comments for Google Sheets
+For comments on specific cells:
+```json
+{
+  "content": "This is a comment on a specific cell",
+  "anchor": {
+    "sheetId": "sheet_id_123",
+    "rowIndex": 5,
+    "columnIndex": 3
+  }
+}
+```
+
+- **Sample Request (Unanchored):**
 ```
 curl -X POST "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment" \
   -H "Content-Type: application/json" \
-  -d '{"content": "This is a test comment on the document"}'
+  -d '{"content": "This is a general comment on the file"}'
 ```
+
+- **Sample Request (Anchored - Google Docs):**
+```
+curl -X POST "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "This is a comment on specific text",
+    "anchor": {
+      "startIndex": 10,
+      "endIndex": 20
+    }
+  }'
+```
+
 - **Sample Response:**
 ```json
 {
@@ -90,10 +141,14 @@ curl -X POST "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o
     "photoLink": "https://lh3.googleusercontent.com/...",
     "me": true
   },
-  "htmlContent": "This is a test comment on the document",
-  "content": "This is a test comment on the document",
+  "htmlContent": "This is a comment on the file",
+  "content": "This is a comment on the file",
   "deleted": false,
   "resolved": false,
+  "anchor": {
+    "startIndex": 10,
+    "endIndex": 20
+  },
   "quotedFileContent": {
     "mimeType": "application/vnd.google-apps.document",
     "value": "quoted content"
@@ -184,10 +239,14 @@ curl -X POST "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o
     "photoLink": "https://lh3.googleusercontent.com/...",
     "me": true
   },
-  "htmlContent": "This is a test comment on the document",
-  "content": "This is a test comment on the document",
+  "htmlContent": "This is a comment on the file",
+  "content": "This is a comment on the file",
   "deleted": false,
   "resolved": true,
+  "anchor": {
+    "startIndex": 10,
+    "endIndex": 20
+  },
   "quotedFileContent": {
     "mimeType": "application/vnd.google-apps.document",
     "value": "quoted content"
@@ -246,13 +305,38 @@ All search and navigation endpoints return objects with the following structure:
 | `image/jpeg` | JPEG image |
 | `image/png` | PNG image |
 
+## Anchor Comment Formats
+
+### Google Docs Anchors
+For comments on specific text in Google Docs:
+```json
+{
+  "anchor": {
+    "startIndex": 10,  // Start position of the text
+    "endIndex": 20     // End position of the text
+  }
+}
+```
+
+### Google Sheets Anchors
+For comments on specific cells in Google Sheets:
+```json
+{
+  "anchor": {
+    "sheetId": "sheet_id_123",  // ID of the sheet
+    "rowIndex": 5,              // Row index (0-based)
+    "columnIndex": 3            // Column index (0-based)
+  }
+}
+```
+
 ## Error Handling
 
 The API returns appropriate HTTP status codes:
 
 - **200 OK**: Successful operation
 - **204 No Content**: Successful deletion
-- **400 Bad Request**: Invalid parameters
+- **400 Bad Request**: Invalid parameters or anchor format
 - **403 Forbidden**: Permission denied
 - **404 Not Found**: File or folder not found
 - **500 Internal Server Error**: Google API error
@@ -263,9 +347,10 @@ The API returns appropriate HTTP status codes:
 - The API is a thin wrapper over the Google Drive API
 - Search operations use partial name matching
 - Navigation operations traverse the folder hierarchy step by step
-- Comments are unanchored (not tied to specific text or location in the file)
-- Not all file types support comments (Google Docs, Sheets, and Slides do)
+- Comments can be unanchored (general file comments) or anchored (tied to specific content)
+- Anchored comments are supported for Google Docs and Google Sheets
 - Comment replies are threaded under the parent comment
 - Resolved comments are marked as resolved but not deleted
 - The `path` field is constructed by the API and represents the full path from root
-- Parent ID is extracted from the first parent in the parents array (Google Drive supports multiple parents) 
+- Parent ID is extracted from the first parent in the parents array (Google Drive supports multiple parents)
+- Anchor parameters must match the file type (Docs vs Sheets have different anchor formats) 
