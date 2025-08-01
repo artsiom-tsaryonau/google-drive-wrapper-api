@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status, Body
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import BaseModel
 from googleapiclient.errors import HttpError
 from google_services import get_drive_service
@@ -15,7 +15,7 @@ class DriveObject(BaseModel):
 
 class CommentRequest(BaseModel):
     content: str
-    anchor: Optional[dict] = None  # For anchored comments, contains location info
+    anchor: Optional[str] # Required for anchored comments
 
 class ReplyRequest(BaseModel):
     content: str
@@ -91,69 +91,74 @@ async def delete_drive_object(
             raise HTTPException(status_code=404, detail=f"File with id '{id}' not found.")
         raise HTTPException(status_code=500, detail=f"Google API error: {e}")
 
+@router.get("/drive/{file_id}/comment")
+async def list_comments(
+    file_id: str,
+    drive_service=Depends(get_drive_service)
+):
+    """
+    List all comments for a file.
+    
+    Example input request:
+        GET /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment
+    
+    Google API request sent:
+        drive_service.comments().list(fileId=file_id, fields="comments(id,createdTime,modifiedTime,author,content,htmlContent,deleted,resolved,anchor,quotedFileContent)")
+    """
+    try:
+        comments = drive_service.comments().list(
+            fileId=file_id, 
+            fields="comments(id,createdTime,modifiedTime,author,content,htmlContent,deleted,resolved,anchor,quotedFileContent)"
+        ).execute()
+        return comments
+    except HttpError as e:
+        raise HTTPException(status_code=e.resp.status, detail=str(e))
+
+@router.get("/drive/{file_id}/comment/{comment_id}")
+async def get_comment(
+    file_id: str,
+    comment_id: str,
+    drive_service=Depends(get_drive_service)
+):
+    """
+    Get a specific comment by ID.
+    
+    Example input request:
+        GET /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment/comment_id_123
+    
+    Google API request sent:
+        drive_service.comments().get(fileId=file_id, commentId=comment_id, fields="id,createdTime,modifiedTime,author,content,htmlContent,deleted,resolved,anchor,quotedFileContent")
+    """
+    try:
+        comment = drive_service.comments().get(
+            fileId=file_id,
+            commentId=comment_id,
+            fields="id,createdTime,modifiedTime,author,content,htmlContent,deleted,resolved,anchor,quotedFileContent"
+        ).execute()
+        return comment
+    except HttpError as e:
+        raise HTTPException(status_code=e.resp.status, detail=str(e))
+
 @router.post("/drive/{file_id}/comment")
 async def add_comment(
     file_id: str,
     req: CommentRequest = Body(...),
     drive_service=Depends(get_drive_service)
 ):
-    """
-    Add a new comment to a file. Supports both unanchored and anchored comments.
-    
-    For unanchored comments:
-        POST /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment
-        Body: {"content": "This is a comment on the file"}
-    
-    For anchored comments (Google Docs):
-        POST /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment
-        Body: {
-            "content": "This is a comment on specific text",
-            "anchor": {
-                "startIndex": 10,
-                "endIndex": 20
-            }
-        }
-    
-    For anchored comments (Google Sheets):
-        POST /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment
-        Body: {
-            "content": "This is a comment on a cell",
-            "anchor": {
-                "sheetId": "sheet_id_123",
-                "rowIndex": 5,
-                "columnIndex": 3
-            }
-        }
-    
-    Google API request sent:
-        drive_service.comments().create(
-            fileId=file_id,
-            body={"content": "comment content", "anchor": {...}}
-        )
-    """
     try:
         # Build the comment body
         comment_body = {"content": req.content}
-        
-        # Add anchor if provided
         if req.anchor:
             comment_body["anchor"] = req.anchor
         
         comment = drive_service.comments().create(
             fileId=file_id,
-            body=comment_body
+            body=comment_body,
+            fields="id,createdTime,modifiedTime,author,content,htmlContent,deleted,resolved,anchor,quotedFileContent"
         ).execute()
         return comment
     except HttpError as e:
-        if e.resp.status == 404:
-            raise HTTPException(status_code=404, detail=f"File with id '{file_id}' not found.")
-        elif e.resp.status == 403:
-            raise HTTPException(status_code=403, detail="Permission denied. Comments may not be supported for this file type.")
-        elif e.resp.status == 400:
-            raise HTTPException(status_code=400, detail="Invalid anchor parameters. Check the anchor format for the file type.")
-        raise HTTPException(status_code=500, detail=f"Google API error: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=e.resp.status, detail=str(e))
 
 @router.delete("/drive/{file_id}/comment/{comment_id}")
 async def delete_comment(
@@ -180,13 +185,7 @@ async def delete_comment(
         ).execute()
         return {"message": f"Comment {comment_id} deleted successfully"}
     except HttpError as e:
-        if e.resp.status == 404:
-            raise HTTPException(status_code=404, detail=f"File or comment not found.")
-        elif e.resp.status == 403:
-            raise HTTPException(status_code=403, detail="Permission denied. Cannot delete this comment.")
-        raise HTTPException(status_code=500, detail=f"Google API error: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=e.resp.status, detail=str(e))
 
 @router.post("/drive/{file_id}/comment/{comment_id}/reply")
 async def add_reply(
@@ -217,13 +216,7 @@ async def add_reply(
         ).execute()
         return reply
     except HttpError as e:
-        if e.resp.status == 404:
-            raise HTTPException(status_code=404, detail=f"File or comment not found.")
-        elif e.resp.status == 403:
-            raise HTTPException(status_code=403, detail="Permission denied. Cannot reply to this comment.")
-        raise HTTPException(status_code=500, detail=f"Google API error: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=e.resp.status, detail=str(e))
 
 @router.post("/drive/{file_id}/comment/{comment_id}/resolve")
 async def resolve_comment(
@@ -252,10 +245,4 @@ async def resolve_comment(
         ).execute()
         return comment
     except HttpError as e:
-        if e.resp.status == 404:
-            raise HTTPException(status_code=404, detail=f"File or comment not found.")
-        elif e.resp.status == 403:
-            raise HTTPException(status_code=403, detail="Permission denied. Cannot resolve this comment.")
-        raise HTTPException(status_code=500, detail=f"Google API error: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=e.resp.status, detail=str(e))

@@ -58,11 +58,111 @@ curl "http://localhost:8000/drive/navigate/folder1/folder2?mimeType=application/
 ]
 ```
 
+### List Comments
+```
+GET /drive/{file_id}/comment
+```
+- **Description:** List all comments for a file.
+- **Parameters:**
+  - `file_id` (required): The ID of the file to list comments for
+- **Sample Request:**
+```
+curl "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment"
+```
+- **Sample Response:**
+```json
+{
+  "kind": "drive#commentList",
+  "comments": [
+    {
+      "kind": "drive#comment",
+      "id": "comment_id_123",
+      "createdTime": "2024-01-01T12:00:00.000Z",
+      "modifiedTime": "2024-01-01T12:00:00.000Z",
+      "author": {
+        "kind": "drive#user",
+        "displayName": "User Name",
+        "photoLink": "https://lh3.googleusercontent.com/...",
+        "me": true
+      },
+      "htmlContent": "This is a comment on the file",
+      "content": "This is a comment on the file",
+      "deleted": false,
+      "resolved": false,
+      "anchor": {
+        "startIndex": 10,
+        "endIndex": 20
+      },
+      "quotedFileContent": {
+        "mimeType": "application/vnd.google-apps.document",
+        "value": "quoted content"
+      }
+    },
+    {
+      "kind": "drive#comment",
+      "id": "comment_id_456",
+      "createdTime": "2024-01-01T13:00:00.000Z",
+      "modifiedTime": "2024-01-01T13:00:00.000Z",
+      "author": {
+        "kind": "drive#user",
+        "displayName": "Another User",
+        "photoLink": "https://lh3.googleusercontent.com/...",
+        "me": false
+      },
+      "htmlContent": "This is another comment",
+      "content": "This is another comment",
+      "deleted": false,
+      "resolved": true
+    }
+  ]
+}
+```
+
+### Get Specific Comment
+```
+GET /drive/{file_id}/comment/{comment_id}
+```
+- **Description:** Get a specific comment by ID.
+- **Parameters:**
+  - `file_id` (required): The ID of the file
+  - `comment_id` (required): The ID of the comment to retrieve
+- **Sample Request:**
+```
+curl "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment/comment_id_123"
+```
+- **Sample Response:**
+```json
+{
+  "kind": "drive#comment",
+  "id": "comment_id_123",
+  "createdTime": "2024-01-01T12:00:00.000Z",
+  "modifiedTime": "2024-01-01T12:00:00.000Z",
+  "author": {
+    "kind": "drive#user",
+    "displayName": "User Name",
+    "photoLink": "https://lh3.googleusercontent.com/...",
+    "me": true
+  },
+  "htmlContent": "This is a comment on the file",
+  "content": "This is a comment on the file",
+  "deleted": false,
+  "resolved": false,
+  "anchor": {
+    "startIndex": 10,
+    "endIndex": 20
+  },
+  "quotedFileContent": {
+    "mimeType": "application/vnd.google-apps.document",
+    "value": "quoted content"
+  }
+}
+```
+
 ### Add Comment to File
 ```
 POST /drive/{file_id}/comment
 ```
-- **Description:** Add a new comment to a file. Supports both unanchored and anchored comments.
+- **Description:** Add a new anchored comment to a file. Anchor parameter is required.
 - **Parameters:**
   - `file_id` (required): The ID of the file to comment on
 - **Request Body:**
@@ -70,16 +170,8 @@ POST /drive/{file_id}/comment
 {
   "content": "This is a comment on the file",
   "anchor": {
-    // Optional: For anchored comments
+    // Required: Anchor information for the comment
   }
-}
-```
-
-#### Unanchored Comments
-For general comments on the entire file:
-```json
-{
-  "content": "This is a general comment on the file"
 }
 ```
 
@@ -108,14 +200,7 @@ For comments on specific cells:
 }
 ```
 
-- **Sample Request (Unanchored):**
-```
-curl -X POST "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment" \
-  -H "Content-Type: application/json" \
-  -d '{"content": "This is a general comment on the file"}'
-```
-
-- **Sample Request (Anchored - Google Docs):**
+- **Sample Request (Google Docs):**
 ```
 curl -X POST "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment" \
   -H "Content-Type: application/json" \
@@ -124,6 +209,20 @@ curl -X POST "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o
     "anchor": {
       "startIndex": 10,
       "endIndex": 20
+    }
+  }'
+```
+
+- **Sample Request (Google Sheets):**
+```
+curl -X POST "http://localhost:8000/drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "This is a comment on a specific cell",
+    "anchor": {
+      "sheetId": "sheet_id_123",
+      "rowIndex": 5,
+      "columnIndex": 3
     }
   }'
 ```
@@ -347,10 +446,10 @@ The API returns appropriate HTTP status codes:
 - The API is a thin wrapper over the Google Drive API
 - Search operations use partial name matching
 - Navigation operations traverse the folder hierarchy step by step
-- Comments can be unanchored (general file comments) or anchored (tied to specific content)
+- Comments require anchor parameters (tied to specific content)
 - Anchored comments are supported for Google Docs and Google Sheets
 - Comment replies are threaded under the parent comment
 - Resolved comments are marked as resolved but not deleted
 - The `path` field is constructed by the API and represents the full path from root
 - Parent ID is extracted from the first parent in the parents array (Google Drive supports multiple parents)
-- Anchor parameters must match the file type (Docs vs Sheets have different anchor formats) 
+- Anchor parameters must match the file type (Docs vs Sheets have different anchor formats)
