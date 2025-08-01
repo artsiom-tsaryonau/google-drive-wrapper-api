@@ -15,7 +15,11 @@ The goal is implement a wrapper over a clunky Google Drive/Docs/Sheets/Slides AP
 |----------|-------|------------|
 | /drive/search?name=&mimeType= | GET | Search Google Drive objects by name with optional mimeType |
 | /drive/navigate/{path:path}?mimeType= | GET | List google drive content in a specific path with optional mimeType filter |
-| /drive/{id} | DELETE | Deletes and object by id from the Google Drive |
+| /drive/{file_id} | DELETE | Deletes and object by id from the Google Drive |
+| /drive/{file_id}/comment | POST | Update new unanchored comment to the file based |
+| /drive/{file_id}/comment/{comment_id} | DELETE | Delete a comment |
+| /drive/{file_id}/comment/{comment_id}/reply | POST | Add a reply to the comment |
+| /drive/{file_id}/comment/{comment_id}/resolve | POST | Resolve the comment |
 
 The Google Drive object information should look like this
 ```
