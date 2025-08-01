@@ -52,6 +52,24 @@ async def get_spreadsheet(spreadsheet_id: str, sheets_service=Depends(get_sheets
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# DELETE /drive/spreadsheets/{spreadsheet_id}: Delete a spreadsheet by id
+@router.delete("/drive/spreadsheets/{spreadsheet_id}")
+async def delete_spreadsheet(spreadsheet_id: str, sheets_service=Depends(get_sheets_service)):
+    """
+    Delete a spreadsheet by its ID.
+    
+    Example input request:
+        DELETE /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY
+    
+    Google API request sent:
+        sheets_service.spreadsheets().delete(spreadsheetId=spreadsheet_id)
+    """
+    try:
+        sheets_service.spreadsheets().delete(spreadsheetId=spreadsheet_id).execute()
+        return {"message": f"Spreadsheet {spreadsheet_id} deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # POST /drive/spreadsheets/{spreadsheet_id}/sheets: Create new empty sheet within spreadsheet
 class NewSheetRequest(BaseModel):
     name: str
