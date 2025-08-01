@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status, Body
-from typing import List, Optional, Union
+from typing import List, Optional
 from pydantic import BaseModel
 from googleapiclient.errors import HttpError
+from pydantic.fields import Field
 from google_services import get_drive_service
 
 router = APIRouter()
@@ -11,11 +12,11 @@ class DriveObject(BaseModel):
     name: str
     mimeType: str
     path: str
-    parent_id: Optional[str]
+    parent_id: Optional[str] = Field(None, description="Parent ID of the file")
 
 class CommentRequest(BaseModel):
     content: str
-    anchor: Optional[str] # Required for anchored comments
+    anchor: Optional[str] = Field(None, description="Anchor for the comment") # Required for anchored comments
 
 class ReplyRequest(BaseModel):
     content: str
