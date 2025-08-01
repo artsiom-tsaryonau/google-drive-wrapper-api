@@ -70,18 +70,14 @@ async def delete_spreadsheet(spreadsheet_id: str, sheets_service=Depends(get_she
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# POST /drive/spreadsheets/{spreadsheet_id}/sheets: Create new empty sheet within spreadsheet
-class NewSheetRequest(BaseModel):
-    name: str
-
-@router.post("/drive/spreadsheets/{spreadsheet_id}/sheets")
-async def create_sheet(spreadsheet_id: str, req: NewSheetRequest, sheets_service=Depends(get_sheets_service)):
+# POST /drive/spreadsheets/{spreadsheet_id}/sheets/{name}: Create new empty sheet within spreadsheet
+@router.post("/drive/spreadsheets/{spreadsheet_id}/sheets/{name}")
+async def create_sheet(spreadsheet_id: str, name: str, sheets_service=Depends(get_sheets_service)):
     """
     Create a new empty sheet within an existing spreadsheet.
     
     Example input request:
-        POST /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets
-        Body: {"name": "Sheet2"}
+        POST /drive/spreadsheets/1R3rJWb50oW2JNOqKd4l0XlP-9hdMPr1c9cxjYX3PWnY/sheets/Sheet2
     
     Google API request sent:
         {
@@ -93,7 +89,7 @@ async def create_sheet(spreadsheet_id: str, req: NewSheetRequest, sheets_service
     """
     body = {
         "requests": [
-            {"addSheet": {"properties": {"title": req.name}}}
+            {"addSheet": {"properties": {"title": name}}}
         ]
     }
     try:
