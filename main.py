@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from config import settings
 from auth import router as auth_router
-from drive import drive_router, spreadsheets_router, documents_router
+from drive import drive_router, spreadsheets_router, documents_router, comments_router
 import uvicorn
 import os
 
@@ -16,6 +16,7 @@ app.include_router(auth_router)
 app.include_router(drive_router)
 app.include_router(spreadsheets_router)
 app.include_router(documents_router)
+app.include_router(comments_router)
 
 @app.get("/")
 async def read_root():
