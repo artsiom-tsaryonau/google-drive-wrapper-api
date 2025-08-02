@@ -71,6 +71,9 @@ Right now the payload and response should adhere to the google's specification f
 
 ## Google Documents API
 
+NOTE: adding new tabs is not possible https://stackoverflow.com/questions/79518064/how-to-create-google-doc-tabs-with-the-python-sdk
+NOTE: adding anchored comments is not possible either
+
 | Endpoint | Method | Description | 
 |----------|-------|------------|
 | /drive/documents?parent=&title= | POST | Create new empty document, with optional parent id parameter |
