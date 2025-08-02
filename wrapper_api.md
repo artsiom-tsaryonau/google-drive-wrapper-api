@@ -23,9 +23,7 @@ The goal is implement a wrapper over a clunky Google Drive/Docs/Sheets/Slides AP
 | /drive/{file_id}/comment/{comment_id}/resolve | POST | Resolve the comment |
 | /drive/{file_id}/comment | GET | List all the comments |
 
-NOTE: The comment system uses a custom anchor system for Google Docs since the Google API does not properly support anchoring for Google Docs. The anchor parameter uses a custom system for Google Docs (Spreadsheet and Slides are not investigated yet) and the anchor field contains the custom data as a JSON string following the format: `{"tab_name": {"offset": {"startIndex": int, "endIndex": int}}}`
-
-For Google Docs, the anchor system allows you to specify which tab and text range the comment should be associated with. The `tab_name` corresponds to the document section/tab, and the `offset` contains the character positions where the comment should be anchored.
+NOTE: The comment system supports anchoring for various file types. For Google Docs, anchoring is limited to basic text ranges since tab functionality has been removed. The anchor field contains custom data as a JSON string following the format: `{"offset": {"startIndex": int, "endIndex": int}}}` for text-based anchoring.
 ```
 {
 	"author": {
@@ -40,7 +38,7 @@ For Google Docs, the anchor system allows you to specify which tab and text rang
 	"htmlContent": "This is a comment with anchor",
 	"content": "This is a comment with anchor",
 	"deleted": false,
-	"anchor": "{\"tab_name\": {\"offset\": {\"startIndex\": 10, \"endIndex\": 20}}}"
+	"anchor": "{\"offset\": {\"startIndex\": 10, \"endIndex\": 20}}"
 }
 ```
 
@@ -78,9 +76,7 @@ Right now the payload and response should adhere to the google's specification f
 | /drive/documents?parent=&title= | POST | Create new empty document, with optional parent id parameter |
 | /drive/documents/{document_id} | GET | Return a specific document by id |
 | /drive/documents/{document_id} | DELETE | Delete document by id |
-| /drive/documents/{document_id}/tabs/{name} | POST | Creates new empty tab in the document |
-| /drive/documents/{document_id}/tabs/{name} | GET | Returns existing tab content from the document |
-| /drive/documents/{document_id}/tabs/{name} | DELETE | Delete existing tab and content from the document |
+
 
 Right now the payload and response should adhere to the google's specification for Docs API.
 

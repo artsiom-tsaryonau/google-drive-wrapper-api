@@ -23,23 +23,8 @@ echo "3. Get a document by ID:"
 curl "$BASE_URL/drive/documents/$SAMPLE_DOCUMENT_ID"
 echo -e "\n---"
 
-# Create a new tab in the document
-echo "4. Create a new tab in the document:"
-curl -X POST "$BASE_URL/drive/documents/$SAMPLE_DOCUMENT_ID/tabs/NewTab"
-echo -e "\n---"
-
-# Get tab content by name
-echo "5. Get tab content by name:"
-curl "$BASE_URL/drive/documents/$SAMPLE_DOCUMENT_ID/tabs/NewTab"
-echo -e "\n---"
-
-# Delete a tab from the document
-echo "6. Delete a tab from the document:"
-curl -X DELETE "$BASE_URL/drive/documents/$SAMPLE_DOCUMENT_ID/tabs/NewTab"
-echo -e "\n---"
-
 # Delete a document by ID
-echo "7. Delete a document by ID:"
+echo "4. Delete a document by ID:"
 curl -X DELETE "$BASE_URL/drive/documents/$SAMPLE_DOCUMENT_ID"
 echo -e "\n---"
 
