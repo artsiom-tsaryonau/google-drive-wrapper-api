@@ -16,10 +16,11 @@ class DriveObject(BaseModel):
 
 class CommentRequest(BaseModel):
     content: str
-    anchor: Optional[str] = Field(None, description="Anchor for the comment") # Required for anchored comments
+    anchor: Optional[str] = Field(None, description="Custom anchor string for Google Docs")
 
 class ReplyRequest(BaseModel):
     content: str
+
 
 def build_drive_object(item: dict, parent_path: str = "") -> DriveObject:
     """Builds a DriveObject from Google Drive API item."""
@@ -49,7 +50,7 @@ async def search_drive(
         files = results.get("files", [])
         return [build_drive_object(f) for f in files]
     except HttpError as e:
-        raise HTTPException(status_code=500, detail=f"Google API error: {e}")
+        raise HTTPException(status_code=e.resp.status, detail=str(e))
 
 @router.get("/drive/navigate/{path:path}", response_model=List[DriveObject])
 async def list_drive_path(
@@ -77,7 +78,7 @@ async def list_drive_path(
         files = results.get("files", [])
         return [build_drive_object(f, parent_path) for f in files]
     except HttpError as e:
-        raise HTTPException(status_code=500, detail=f"Google API error: {e}")
+        raise HTTPException(status_code=e.resp.status, detail=str(e))
 
 @router.delete("/drive/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_drive_object(
@@ -88,9 +89,7 @@ async def delete_drive_object(
     try:
         drive_service.files().delete(fileId=id).execute()
     except HttpError as e:
-        if e.resp.status == 404:
-            raise HTTPException(status_code=404, detail=f"File with id '{id}' not found.")
-        raise HTTPException(status_code=500, detail=f"Google API error: {e}")
+        raise HTTPException(status_code=e.resp.status, detail=str(e))
 
 @router.get("/drive/{file_id}/comment")
 async def list_comments(
@@ -146,10 +145,27 @@ async def add_comment(
     req: CommentRequest = Body(...),
     drive_service=Depends(get_drive_service)
 ):
+    """
+    Create a new comment on a file.
+    
+    Note: The comment system uses a custom anchor system for Google Docs.
+    The anchor parameter is passed through as-is without validation.
+    For other file types (Spreadsheets, Slides), anchoring is not yet supported.
+    
+    Example input request:
+        POST /drive/1a-28yTY23NuCa7vmyMABGgRDCErW58Q99F_2o9ZePGo/comment
+        Body: {
+            "content": "This is a comment",
+            "anchor": "custom_anchor_string"
+        }
+    """
     try:
         # Build the comment body
         comment_body = {"content": req.content}
+        
+        # Handle custom anchor system for Google Docs
         if req.anchor:
+            # Pass through the anchor string without validation
             comment_body["anchor"] = req.anchor
         
         comment = drive_service.comments().create(

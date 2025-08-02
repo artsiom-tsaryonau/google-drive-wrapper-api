@@ -23,6 +23,27 @@ The goal is implement a wrapper over a clunky Google Drive/Docs/Sheets/Slides AP
 | /drive/{file_id}/comment/{comment_id}/resolve | POST | Resolve the comment |
 | /drive/{file_id}/comment | GET | List all the comments |
 
+NOTE: The comment system uses a custom anchor system for Google Docs since the Google API does not properly support anchoring for Google Docs. The anchor parameter uses a custom system for Google Docs (Spreadsheet and Slides are not investigated yet) and the anchor field contains the custom data as a JSON string following the format: `{"tab_name": {"offset": {"startIndex": int, "endIndex": int}}}`
+
+For Google Docs, the anchor system allows you to specify which tab and text range the comment should be associated with. The `tab_name` corresponds to the document section/tab, and the `offset` contains the character positions where the comment should be anchored.
+```
+{
+	"author": {
+		"displayName": "Artsiom Tsaryonau",
+		"kind": "drive#user",
+		"me": true,
+		"photoLink": "//lh3.googleusercontent.com/a/ACg8ocKR2dKfCqQUXJsYHibmiL9StNvS32e_ldTqS6GGauqbNwRZ-w=s50-c-k-no"
+	},
+	"id": "AAABnphfMkI",
+	"createdTime": "2025-08-02T14:00:50.229Z",
+	"modifiedTime": "2025-08-02T14:00:50.229Z",
+	"htmlContent": "This is a comment with anchor",
+	"content": "This is a comment with anchor",
+	"deleted": false,
+	"anchor": "{\"tab_name\": {\"offset\": {\"startIndex\": 10, \"endIndex\": 20}}}"
+}
+```
+
 The Google Drive object information should look like this
 ```
 {
